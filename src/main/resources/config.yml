@@ -1,0 +1,49 @@
+aliases:
+  - "shop"
+  - "axshop"
+  - "sh"
+
+main-menu:
+  categories:
+    - blocks: # <- Listaelemként!
+        material: "DIAMOND_BLOCK"
+        name: "Blokkok"
+        lore:
+          - ""
+          - "Blokkok bolt"
+        slot: 0
+    - items: # <- Listaelemként!
+        material: "DIAMOND_SWORD"
+        name: "Tárgyak"
+        lore:
+          - ""
+          - "Tárgyak bolt"
+        slot: 1
+
+shops:
+  - blocks: # <- Listaelemként!
+      diamond-block:
+        material: "DIAMOND_BLOCK"
+        name: "DIAMOND BLOCK - occsó"
+        slot: 0
+        prices:
+          buy: 100
+          sell: 50
+        lore:
+          - ""
+          - "&fBal katt: vásárlás | {buyPrice}"
+          - "&fJobb katt: eladás | {sellPrice}"
+          - "&fShift + Jobb katt: Összes eladása"
+  - items: # <- Listaelemként!
+      diamond-sword:
+        material: "DIAMOND_SWORD"
+        name: "DIAMOND SWORD - ez is occsó"
+        slot: 0
+        prices:
+          buy: 100
+          sell: 50
+        lore:
+          - ""
+          - "&fBal katt: vásárlás | {buyPrice}"
+          - "&fJobb katt: eladás | {sellPrice}"
+          - "&fShift + Jobb katt: Összes eladása"

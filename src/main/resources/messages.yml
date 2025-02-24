@@ -1,0 +1,7 @@
+prefix: "&8[&6AxShop&8] &7>"
+
+messages:
+  reload: "%prefix% &aSuccessfully reloaded the files!"
+  no-permission: "%prefix% &cYou do not have permission for this!"
+  missing-argument: "%prefix% &cCorrect usage: {usage}"
+  player-required: "%prefix% &cOnly a player can execute this command!"
