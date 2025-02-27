@@ -13,7 +13,9 @@ public enum ConfigKeys {
     ALIASES("aliases"),
 
     FORMATTING_ENABLED("formatting.enabled"),
-    FORMATTING_TYPE("formatting.type");
+    FORMATTING_TYPE("formatting.type"),
+
+    DISABLED_WORLDS("disabled-worlds");
 
     private final String path;
     private static final Config config = AxShop.getInstance().getConfiguration();

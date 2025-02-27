@@ -8,3 +8,9 @@ messages:
   menu-not-loaded: "%prefix% &cThe menu is not loaded in! Please contact a developer if you are seeing this message!"
   not-enough-money: "%prefix% &cYou do not have enough money!"
   full-inventory: "%prefix% &cYour inventory is full!"
+  no-item-found: "%prefix% &cThere is no such an item in your inventory!"
+  disabled-world: "%prefix% &cYou can't open the shop in this world!"
+  worth:
+    header: "&eInventory value:"
+    item: "&7- &e{item} &7(&e{amount}&fx&7) - &e{value} - &e{currency}"
+    total: "&fTotal: &e{total}"

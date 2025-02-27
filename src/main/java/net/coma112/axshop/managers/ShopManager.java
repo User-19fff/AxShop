@@ -4,8 +4,10 @@ import com.artillexstudios.axapi.config.Config;
 import lombok.Getter;
 import net.coma112.axshop.AxShop;
 import net.coma112.axshop.holders.ShopInventoryHolder;
+import net.coma112.axshop.identifiers.CurrencyTypes;
 import net.coma112.axshop.processor.LoreProcessor;
 import net.coma112.axshop.processor.MessageProcessor;
+import net.coma112.axshop.utils.InventoryUtils;
 import net.coma112.axshop.utils.ItemBuilder;
 import net.coma112.axshop.utils.LoggerUtils;
 import org.bukkit.Bukkit;
@@ -26,6 +28,7 @@ public class ShopManager {
     @Getter private static final ShopManager instance = new ShopManager();
     private final Map<String, Inventory> menus = new HashMap<>();
     private final Map<String, ShopCategory> categories = new HashMap<>();
+    private Inventory inventory;
 
     public void initialize() {
         loadMainMenu();
@@ -34,6 +37,10 @@ public class ShopManager {
 
     public Optional<Inventory> getMenu(@NotNull String menuId) {
         return Optional.ofNullable(menus.get(menuId));
+    }
+
+    public Inventory getMainMenu() {
+        return inventory;
     }
 
     public Optional<ShopCategory> getCategory(@NotNull String name) {
@@ -45,7 +52,7 @@ public class ShopManager {
         int size = config.getInt("main-menu.size", 27);
         String title = MessageProcessor.process(config.getString("main-menu.name", "Shop Menu"));
         ShopInventoryHolder holder = new ShopInventoryHolder("main-menu");
-        Inventory inventory = Bukkit.createInventory(holder, size, title);
+        inventory = Bukkit.createInventory(holder, size, title);
         List<Map<Object, Object>> categories = config.getMapList("main-menu.categories");
 
         for (Map<Object, Object> category : categories) {
@@ -100,7 +107,7 @@ public class ShopManager {
         }
     }
 
-    private void loadCategoryItems(ShopCategory category, @NotNull Map<String, Object> categoryData) {
+    private void loadCategoryItems(@NotNull ShopCategory category, @NotNull Map<String, Object> categoryData) {
         Map<String, Object> items = (Map<String, Object>) categoryData.get("items");
 
         items.forEach((itemId, itemData) -> {
@@ -117,7 +124,7 @@ public class ShopManager {
         Map<String, Object> prices = (Map<String, Object>) itemMap.get("prices");
         int buyPrice = (int) prices.get("buy");
         int sellPrice = (int) prices.get("sell");
-        String currency = (String) itemMap.get("currency");
+        CurrencyTypes currency = CurrencyTypes.valueOf(((String) itemMap.get("currency")).toUpperCase());
 
         return ItemBuilder.createShopItem(
                 Material.valueOf((String) itemMap.get("material")),
@@ -125,7 +132,7 @@ public class ShopManager {
                 LoreProcessor.processItemLore((List<String>) itemMap.get("lore"), buyPrice, sellPrice, currency),
                 buyPrice,
                 sellPrice,
-                currency
+                currency.name()
         );
     }
 

@@ -3,16 +3,19 @@ package net.coma112.axshop.listeners;
 import net.coma112.axshop.AxShop;
 import net.coma112.axshop.handlers.CurrencyHandler;
 import net.coma112.axshop.holders.ShopInventoryHolder;
+import net.coma112.axshop.identifiers.CurrencyTypes;
 import net.coma112.axshop.identifiers.keys.MessageKeys;
 import net.coma112.axshop.managers.ShopManager;
 import net.coma112.axshop.registry.CurrencyRegistry;
 import net.coma112.axshop.utils.InventoryUtils;
 import net.coma112.axshop.utils.LoggerUtils;
+import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
@@ -40,6 +43,8 @@ public class ShopListener implements Listener {
         event.setCancelled(true);
 
         ItemStack clickedItem = event.getCurrentItem();
+        Material material = Objects.requireNonNull(event.getCurrentItem()).getType();
+
         if (clickedItem == null) return;
 
         try {
@@ -55,28 +60,54 @@ public class ShopListener implements Listener {
                 return;
             }
 
-            String currency = meta.getPersistentDataContainer().get(CURRENCY_KEY, PersistentDataType.STRING);
+            CurrencyTypes currency = Objects.requireNonNull(CurrencyTypes.valueOf(meta.getPersistentDataContainer().get(CURRENCY_KEY, PersistentDataType.STRING)));
             Integer buyPrice = meta.getPersistentDataContainer().get(BUY_PRICE_KEY, PersistentDataType.INTEGER);
             Integer sellPrice = meta.getPersistentDataContainer().get(SELL_PRICE_KEY, PersistentDataType.INTEGER);
 
-            if (buyPrice == null || sellPrice == null) {
-                LoggerUtils.warn("Currency or price not found in clicked item!");
-                return;
-            }
-
             Player player = (Player) event.getWhoClicked();
 
-            if (event.isLeftClick()) {
-                if (InventoryUtils.isInventoryFull(player)) {
-                    player.sendMessage(MessageKeys.FULL_INVENTORY.getMessage());
-                    return;
+            switch (event.getClick()) {
+                case LEFT -> {
+                    if (buyPrice == null) return;
+
+                    if (InventoryUtils.isInventoryFull(player)) {
+                        player.sendMessage(MessageKeys.FULL_INVENTORY.getMessage());
+                        return;
+                    }
+
+                    CurrencyHandler.deduct(player, buyPrice, currency);
+                    player.getInventory().addItem(ItemStack.of(material));
                 }
 
-                CurrencyHandler.deduct(player, buyPrice, Objects.requireNonNull(currency));
-                player.getInventory().addItem(clickedItem);
-            } else if (event.isRightClick()) {
-                CurrencyHandler.add(player, sellPrice, Objects.requireNonNull(currency));
-                InventoryUtils.hasAndRemoveOne(player, clickedItem);
+                 case RIGHT -> {
+                    if (sellPrice == null) return;
+
+                    int amount = InventoryUtils.countItems(player, material);
+
+                     if (amount == 0) {
+                         player.sendMessage(MessageKeys.NO_ITEM_FOUND.getMessage());
+                         return;
+                     }
+
+                    CurrencyHandler.add(player, sellPrice, currency);
+                    InventoryUtils.hasAndRemove(player, material, 1);
+                 }
+
+                case SHIFT_RIGHT -> {
+                    if (sellPrice == null) return;
+
+                    int amount = InventoryUtils.countItems(player, material);
+
+                    if (amount == 0) {
+                        player.sendMessage(MessageKeys.NO_ITEM_FOUND.getMessage());
+                        return;
+                    }
+
+                    int allSellPrice = sellPrice * amount;
+
+                    InventoryUtils.hasAndRemove(player, material, amount);
+                    CurrencyHandler.add(player, allSellPrice, currency);
+                }
             }
         } catch (Exception exception) {
             LoggerUtils.warn("Error handling menu click: " + exception.getMessage());
@@ -88,5 +119,16 @@ public class ShopListener implements Listener {
         InventoryHolder holder = event.getInventory().getHolder();
 
         if (holder instanceof ShopInventoryHolder) event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onInventoryClose(@NotNull final InventoryCloseEvent event) {
+        InventoryHolder holder = event.getInventory().getHolder();
+
+        if (holder instanceof ShopInventoryHolder shopHolder) {
+            Player player = (Player) event.getPlayer();
+
+            if (!shopHolder.getShopType().equals("main-menu")) AxShop.getInstance().getScheduler().runTaskLater(() -> player.openInventory(ShopManager.getInstance().getMainMenu()), 1L);
+        }
     }
 }

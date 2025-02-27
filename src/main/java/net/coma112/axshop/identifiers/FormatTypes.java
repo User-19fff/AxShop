@@ -7,6 +7,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public enum FormatTypes {
@@ -18,10 +19,8 @@ public enum FormatTypes {
         if (!ConfigKeys.FORMATTING_ENABLED.getBoolean()) return String.valueOf(price);
 
         return switch (FormatTypes.valueOf(ConfigKeys.FORMATTING_TYPE.getString().toUpperCase())) {
-            case DOT -> String
-                    .format("%,d", price)
-                    .replace(",", ".");
-            case COMMAS -> String.format("%,d", price);
+            case DOT -> String.format(Locale.ENGLISH, "%,d", price).replace(",", ".");
+            case COMMAS -> String.format(Locale.ENGLISH, "%,d", price);
             case BASIC -> {
                 List<Map.Entry<Long, String>> sortedEntries = Collections.synchronizedList(new ArrayList<>(RegisterUtils.getBasicFormatOverrides().entrySet()));
 

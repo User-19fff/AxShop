@@ -18,6 +18,14 @@ formatting:
 # commas = 1,000,000
 # basic = 1M
 
+currencies:
+  vault: "Vault"
+  beasttoken: "BeastToken"
+  playerpoints: "PlayerPoints"
+
+disabled-worlds:
+  - "world_nether"
+
 main-menu:
   name: "&aAvailable Shops"
   size: 27
@@ -44,7 +52,7 @@ shops:
       items:
         diamond-block:
           material: "DIAMOND_BLOCK"
-          name: "&fDiamond Block"
+          name: "&eDiamond Block"
           slot: 0
           currency: "vault"
           prices:
@@ -52,8 +60,8 @@ shops:
             sell: 50
           lore:
             - ""
-            - "&eLeft click &8» &6&lBUY &8» &6${buyPrice}"
-            - "&eRight click &8» &6&lSELL &8» &6${sellPrice}"
+            - "&eLeft click &8» &6&lBUY &8» $&6{buyPrice}&a$"
+            - "&eRight click &8» &6&lSELL &8» &a$&6{sellPrice}&a$"
             - "&eShift + Right click &8» &6&lSELL ALL"
             - ""
             - "&eValuta: &6{currency}"
@@ -63,7 +71,7 @@ shops:
       items:
         diamond-sword:
           material: "DIAMOND_SWORD"
-          name: "&fDiamond Sword"
+          name: "&eDiamond Sword"
           slot: 0
           currency: "vault"
           prices:
@@ -71,8 +79,25 @@ shops:
             sell: 50
           lore:
             - ""
-            - "&eLeft click &8» &6&lBUY &8» &6${buyPrice}"
-            - "&eRight click &8» &6&lSELL &8» &6${sellPrice}"
+            - "&eLeft click &8» &6&lBUY &8» $&6{buyPrice}&a$"
+            - "&eRight click &8» &6&lSELL &8» &a$&6{sellPrice}&a$"
+            - "&eShift + Right click &8» &6&lSELL ALL"
+            - ""
+            - "&eValuta: &6{currency}"
+        op:
+          material: "EMERALD"
+          name: "&eOP on server"
+          slot: 0
+          currency: "vault"
+          prices:
+            buy: 100
+            sell: 50
+          custom:
+            - "op %player%"
+          lore:
+            - ""
+            - "&eLeft click &8» &6&lBUY &8» $&6{buyPrice}&a$"
+            - "&eRight click &8» &6&lSELL &8» &a$&6{sellPrice}&a$"
             - "&eShift + Right click &8» &6&lSELL ALL"
             - ""
             - "&eValuta: &6{currency}"

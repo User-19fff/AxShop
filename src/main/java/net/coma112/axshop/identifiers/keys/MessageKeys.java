@@ -17,8 +17,15 @@ public enum MessageKeys {
     NO_PERMISSION("messages.no-permission"),
     MENU_NOT_LOADED("messages.menu-not-loaded"),
     NOT_ENOUGH_MONEY("messages.not-enough-money"),
+    NO_ITEM_FOUND("messages.no-item-found"),
 
-    FULL_INVENTORY("messages.full-inventory");
+    FULL_INVENTORY("messages.full-inventory"),
+
+    DISABLED_WORLD("messages.disabled-world"),
+
+    WORTH_ITEM("messages.worth.item"),
+    WORTH_HEADER("messages.worth.header"),
+    WORTH_TOTAL("messages.worth.total");
 
     private final String path;
     private static final AxShop PLUGIN = AxShop.getInstance();
