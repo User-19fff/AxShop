@@ -3,3 +3,9 @@ version: '1.0.0'
 main: net.coma112.axshop.AxShop
 api-version: '1.21'
 folia-supported: true
+softdepend: [Vault,
+             UltraEconomy,
+             PlayerPoints,
+             EliteMobs,
+             CoinsEngine,
+             BeastTokens]

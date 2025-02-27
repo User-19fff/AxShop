@@ -10,7 +10,10 @@ import java.util.List;
 
 @Getter
 public enum ConfigKeys {
-    ALIASES("aliases");
+    ALIASES("aliases"),
+
+    FORMATTING_ENABLED("formatting.enabled"),
+    FORMATTING_TYPE("formatting.type");
 
     private final String path;
     private static final Config config = AxShop.getInstance().getConfiguration();

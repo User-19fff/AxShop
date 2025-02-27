@@ -16,27 +16,23 @@ repositories {
     maven("https://jitpack.io")
     maven("https://repo.artillex-studios.com/releases")
     //maven("https://repo.nightexpressdev.com/releases") // coinsengine
-    //maven("https://repo.magmaguy.com/releases") // elitemobs
-    //maven("https://repo.techscode.com/repository/techscode-apis/") // ultraeconomy
+    maven("https://repo.rosewooddev.io/repository/public/") // playerpoints
 }
 
 dependencies {
-    // beasttoken - jar fajl beolvasas
-    // playerpoints - jar fajl beolvasas
-
     implementation("com.artillexstudios.axapi:axapi:1.4.513:all")
 
     zap("com.github.Anon8281:UniversalScheduler:0.1.6")
     //zap("su.nightexpress.coinsengine:CoinsEngine:2.4.1") // coinsengine
 
+    compileOnly("org.black_ixx:playerpoints:3.2.6") // playerpoints
+
     compileOnly("io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT")
     compileOnly("org.projectlombok:lombok:1.18.36")
-    //compileOnly("com.magmaguy:EliteMobs:9.1.9") // elitemobs
-    //compileOnly("me.TechsCode:UltraEconomyAPI:2.10.3") // ultra economy
-
-    //compileOnly("com.github.MilkBowl:VaultAPI:1.7.1") {
-    //    exclude(module = "org.bukkit.bukkit") // vault
-    //}
+    compileOnly(files("libs/beasttokens.jar"))
+    compileOnly("com.github.MilkBowl:VaultAPI:1.7.1") {
+        exclude(module = "org.bukkit.bukkit") // vault
+    }
 }
 
 java {

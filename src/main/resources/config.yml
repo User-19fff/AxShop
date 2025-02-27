@@ -3,47 +3,76 @@ aliases:
   - "axshop"
   - "sh"
 
+formatting:
+  enabled: true
+  type: dot
+  basic:
+    '1000': K
+    '1000000': M
+    '1000000000': B
+    '1000000000000': T
+
+# Types
+
+# dot = 1.000.000
+# commas = 1,000,000
+# basic = 1M
+
 main-menu:
+  name: "&aAvailable Shops"
+  size: 27
   categories:
-    - blocks: # <- Listaelemként!
+    - blocks:
         material: "DIAMOND_BLOCK"
-        name: "Blokkok"
+        name: "&2• &aBlocks &2•"
         lore:
           - ""
-          - "Blokkok bolt"
+          - "&7Click to open the shop."
         slot: 0
-    - items: # <- Listaelemként!
+    - items:
         material: "DIAMOND_SWORD"
-        name: "Tárgyak"
+        name: "&2• &aItems &2•"
         lore:
           - ""
-          - "Tárgyak bolt"
+          - "&7Click to open the shop."
         slot: 1
 
 shops:
-  - blocks: # <- Listaelemként!
-      diamond-block:
-        material: "DIAMOND_BLOCK"
-        name: "DIAMOND BLOCK - occsó"
-        slot: 0
-        prices:
-          buy: 100
-          sell: 50
-        lore:
-          - ""
-          - "&fBal katt: vásárlás | {buyPrice}"
-          - "&fJobb katt: eladás | {sellPrice}"
-          - "&fShift + Jobb katt: Összes eladása"
-  - items: # <- Listaelemként!
-      diamond-sword:
-        material: "DIAMOND_SWORD"
-        name: "DIAMOND SWORD - ez is occsó"
-        slot: 0
-        prices:
-          buy: 100
-          sell: 50
-        lore:
-          - ""
-          - "&fBal katt: vásárlás | {buyPrice}"
-          - "&fJobb katt: eladás | {sellPrice}"
-          - "&fShift + Jobb katt: Összes eladása"
+  - blocks:
+      name: "&2• &aBlocks &2•"
+      size: 27
+      items:
+        diamond-block:
+          material: "DIAMOND_BLOCK"
+          name: "&fDiamond Block"
+          slot: 0
+          currency: "vault"
+          prices:
+            buy: 100
+            sell: 50
+          lore:
+            - ""
+            - "&eLeft click &8» &6&lBUY &8» &6${buyPrice}"
+            - "&eRight click &8» &6&lSELL &8» &6${sellPrice}"
+            - "&eShift + Right click &8» &6&lSELL ALL"
+            - ""
+            - "&eValuta: &6{currency}"
+  - items:
+      name: "&2• &aItems &2•"
+      size: 27
+      items:
+        diamond-sword:
+          material: "DIAMOND_SWORD"
+          name: "&fDiamond Sword"
+          slot: 0
+          currency: "vault"
+          prices:
+            buy: 100
+            sell: 50
+          lore:
+            - ""
+            - "&eLeft click &8» &6&lBUY &8» &6${buyPrice}"
+            - "&eRight click &8» &6&lSELL &8» &6${sellPrice}"
+            - "&eShift + Right click &8» &6&lSELL ALL"
+            - ""
+            - "&eValuta: &6{currency}"

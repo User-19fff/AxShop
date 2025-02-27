@@ -5,7 +5,5 @@ public enum CurrencyTypes {
     VAULT,
     BEASTTOKEN,
     COINSENGINE,
-    ELITEMOBS,
-    PLAYERPOINTS,
-    ULTRAECONOMY
+    PLAYERPOINTS
 }

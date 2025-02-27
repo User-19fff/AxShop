@@ -10,7 +10,6 @@ import com.github.Anon8281.universalScheduler.scheduling.schedulers.TaskSchedule
 import lombok.Getter;
 import net.coma112.axshop.managers.ShopManager;
 import net.coma112.axshop.utils.RegisterUtils;
-import org.bukkit.plugin.java.JavaPlugin;
 import revxrsal.zapper.ZapperJavaPlugin;
 
 import java.io.File;
@@ -36,6 +35,8 @@ public final class AxShop extends ZapperJavaPlugin {
 
         RegisterUtils.registerCommands();
         RegisterUtils.registerListeners();
+        RegisterUtils.loadBasicFormatOverrides();
+        RegisterUtils.registerHooks();
     }
 
     public Config getConfiguration() {

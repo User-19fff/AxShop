@@ -1,117 +1,57 @@
-package net.coma112.axshop.item;
+package net.coma112.axshop.utils;
 
-import net.coma112.axshop.processor.MessageProcessor;
+import lombok.experimental.UtilityClass;
+import net.coma112.axshop.AxShop;
+import net.coma112.axshop.identifiers.FormatTypes;
 import org.bukkit.Material;
-import org.bukkit.enchantments.Enchantment;
-import org.bukkit.inventory.ItemFlag;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.annotations.Range;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
-@SuppressWarnings("all")
-public class ItemBuilder implements ItemFactory {
-    private final ItemStack is;
-    private final ItemMeta meta;
-    private int slot;
-    private boolean finished = false;
+@UtilityClass
+@SuppressWarnings("deprecation")
+public class ItemBuilder {
+    private static final NamespacedKey CATEGORY_KEY = new NamespacedKey(AxShop.getInstance(), "shop-category");
+    private static final NamespacedKey BUY_PRICE_KEY = new NamespacedKey(AxShop.getInstance(), "shop-buy-price");
+    private static final NamespacedKey SELL_PRICE_KEY = new NamespacedKey(AxShop.getInstance(), "shop-sell-price");
+    private static final NamespacedKey CURRENCY_KEY = new NamespacedKey(AxShop.getInstance(), "shop-currency");
 
-    public ItemBuilder(@NotNull ItemStack item) {
-        is = item;
-        meta = item.getItemMeta();
+    @NotNull
+    public static ItemStack createCategoryItem(@NotNull Material material, @NotNull String name, List<String> lore, @NotNull String categoryId) {
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.setDisplayName(name);
+        meta.setLore(lore);
+        meta.getPersistentDataContainer().set(CATEGORY_KEY, PersistentDataType.STRING, categoryId);
+
+        item.setItemMeta(meta);
+        return item;
     }
 
-    ItemBuilder(@NotNull Material type) {
-        this(type, 1);
-    }
+    @NotNull
+    public static ItemStack createShopItem(@NotNull Material material, @NotNull String name, @NotNull List<String> lore, int buyPrice, int sellPrice, @NotNull String currency) {
+        List<String> processedLore = lore.stream()
+                .map(line -> line
+                        .replace("{buyPrice}", FormatTypes.format(buyPrice))
+                        .replace("{sellPrice}", FormatTypes.format(sellPrice)))
+                .collect(Collectors.toList());
 
-    public ItemBuilder(@NotNull Material type, @Range(from = 0, to = 64) int amount) {
-        this(type, amount, (short) 0);
-    }
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+        meta.setDisplayName(name);
+        meta.setLore(processedLore);
 
-    public ItemBuilder(@NotNull Material type, @Range(from = 0, to = 64) int amount, short damage) {
-        this(type, amount, damage, null);
-    }
+        meta.getPersistentDataContainer().set(BUY_PRICE_KEY, PersistentDataType.INTEGER, buyPrice);
+        meta.getPersistentDataContainer().set(SELL_PRICE_KEY, PersistentDataType.INTEGER, sellPrice);
+        meta.getPersistentDataContainer().set(CURRENCY_KEY, PersistentDataType.STRING, currency);
 
-    public ItemBuilder(@NotNull Material type, @Range(from = 0, to = 64) int amount, short damage, @Nullable Byte data) {
-        is = new ItemStack(type, amount, damage, data);
-        meta = is.getItemMeta();
-    }
-
-    @Override
-    public ItemBuilder setType(@NotNull Material material) {
-        is.setType(material);
-        return this;
-    }
-
-    @Override
-    public ItemBuilder setCount(@Range(from = 0, to = 64) int newCount) {
-        is.setAmount(newCount);
-        return this;
-    }
-
-    @Override
-    public ItemBuilder setName(@NotNull String name) {
-        meta.setDisplayName(MessageProcessor.process(name));
-        return this;
-    }
-
-    @Override
-    public void addEnchantment(@NotNull Enchantment enchantment, int level) {
-        meta.addEnchant(enchantment, level, true);
-    }
-
-    @Override
-    public ItemBuilder addLore(@NotNull String... lores) {
-        List<String> loreList = Arrays.asList(lores);
-        List<String> currentLores = meta.getLore();
-        currentLores = currentLores == null ? new ArrayList<>() : currentLores;
-
-        currentLores.addAll(loreList);
-        meta.setLore(currentLores);
-
-        return this;
-    }
-
-    @Override
-    public ItemBuilder setUnbreakable() {
-        meta.setUnbreakable(true);
-
-        return this;
-    }
-
-    public ItemBuilder addFlag(@NotNull ItemFlag flag) {
-        meta.addItemFlags(flag);
-
-        return this;
-    }
-
-    @Override
-    public ItemBuilder removeLore(int line) {
-        List<String> lores = meta.getLore();
-        lores = lores == null ? new ArrayList<>() : lores;
-
-        lores.remove(Math.min(line, lores.size()));
-        meta.setLore(lores);
-
-        return this;
-    }
-
-    @Override
-    public ItemStack finish() {
-        is.setItemMeta(meta);
-
-        finished = true;
-        return is;
-    }
-
-    @Override
-    public boolean isFinished() {
-        return finished;
+        item.setItemMeta(meta);
+        return item;
     }
 }

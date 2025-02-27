@@ -14,21 +14,26 @@ public enum MessageKeys {
     MISSING_ARGUMENT("messages.missing-argument"),
     PLAYER_REQUIRED("messages.player-required"),
 
-    NO_PERMISSION("messages.no-permission");
+    NO_PERMISSION("messages.no-permission"),
+    MENU_NOT_LOADED("messages.menu-not-loaded"),
+    NOT_ENOUGH_MONEY("messages.not-enough-money"),
+
+    FULL_INVENTORY("messages.full-inventory");
 
     private final String path;
+    private static final AxShop PLUGIN = AxShop.getInstance();
 
     MessageKeys(@NotNull String path) {
         this.path = path;
     }
 
     public @NotNull String getMessage() {
-        return MessageProcessor.process(AxShop.getInstance().getLanguage().getString(path))
-                .replace("%prefix%", AxShop.getInstance().getLanguage().getString("prefix"));
+        return MessageProcessor.process(PLUGIN.getLanguage().getString(path))
+                .replace("%prefix%", MessageProcessor.process(PLUGIN.getLanguage().getString("prefix")));
     }
 
     public List<String> getMessages() {
-        return AxShop.getInstance().getLanguage().getStringList(path)
+        return PLUGIN.getLanguage().getStringList(path)
                 .stream()
                 .toList();
 

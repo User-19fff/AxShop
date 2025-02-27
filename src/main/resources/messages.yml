@@ -5,3 +5,6 @@ messages:
   no-permission: "%prefix% &cYou do not have permission for this!"
   missing-argument: "%prefix% &cCorrect usage: {usage}"
   player-required: "%prefix% &cOnly a player can execute this command!"
+  menu-not-loaded: "%prefix% &cThe menu is not loaded in! Please contact a developer if you are seeing this message!"
+  not-enough-money: "%prefix% &cYou do not have enough money!"
+  full-inventory: "%prefix% &cYour inventory is full!"
