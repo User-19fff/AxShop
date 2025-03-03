@@ -50,10 +50,20 @@ shops:
       name: "&2• &aBlocks &2•"
       size: 27
       items:
+        filler1:
+          slot: "1-7;19-25;9&17"
+          material: "BLACK_STAINED_GLASS_PANE"
+          name: ""
+          lore: []
+        filler2:
+          slot: "0&8&18&26"
+          material: "ORANGE_STAINED_GLASS_PANE"
+          name: ""
+          lore: []
         diamond-block:
           material: "DIAMOND_BLOCK"
           name: "&eDiamond Block"
-          slot: 0
+          slot: 10
           currency: "vault"
           prices:
             buy: 100
@@ -69,10 +79,20 @@ shops:
       name: "&2• &aItems &2•"
       size: 27
       items:
+        filler1:
+          slot: "1-7;19-25;9&17"
+          material: "BLACK_STAINED_GLASS_PANE"
+          name: ""
+          lore: [ ]
+        filler2:
+          slot: "0&8&18&26"
+          material: "ORANGE_STAINED_GLASS_PANE"
+          name: ""
+          lore: [ ]
         diamond-sword:
           material: "DIAMOND_SWORD"
           name: "&eDiamond Sword"
-          slot: 0
+          slot: 10
           currency: "vault"
           prices:
             buy: 100
@@ -87,7 +107,7 @@ shops:
         op:
           material: "EMERALD"
           name: "&eOP on server"
-          slot: 0
+          slot: 11
           currency: "vault"
           prices:
             buy: 100

@@ -5,6 +5,7 @@ import net.coma112.axshop.handlers.CurrencyHandler;
 import net.coma112.axshop.holders.ShopInventoryHolder;
 import net.coma112.axshop.identifiers.CurrencyTypes;
 import net.coma112.axshop.identifiers.keys.MessageKeys;
+import net.coma112.axshop.managers.ShopCategory;
 import net.coma112.axshop.managers.ShopManager;
 import net.coma112.axshop.registry.CurrencyRegistry;
 import net.coma112.axshop.utils.InventoryUtils;
@@ -38,25 +39,35 @@ public class ShopListener implements Listener {
         if (clickedInventory == null) return;
 
         InventoryHolder holder = clickedInventory.getHolder();
-        if (!(holder instanceof ShopInventoryHolder)) return;
+        if (!(holder instanceof ShopInventoryHolder shopHolder)) return;
 
         event.setCancelled(true);
 
         ItemStack clickedItem = event.getCurrentItem();
-        Material material = Objects.requireNonNull(event.getCurrentItem()).getType();
-
         if (clickedItem == null) return;
 
         try {
             ItemMeta meta = clickedItem.getItemMeta();
             if (meta == null) return;
 
+            // Ellenőrizzük, hogy a kattintott elem egy kategória-e
             String categoryId = meta.getPersistentDataContainer().get(CATEGORY_KEY, PersistentDataType.STRING);
-
             if (categoryId != null) {
+                // Megnyitjuk a kategóriát
                 ShopManager.getInstance().getCategory(categoryId).ifPresent(category -> {
                     event.getWhoClicked().openInventory(category.getInventory());
                 });
+                return;
+            }
+
+            // Ha nem kategória, akkor normál elemként kezeljük
+            ShopCategory category = ShopManager.getInstance().getCategory(shopHolder.getShopType()).orElse(null);
+            if (category == null) return;
+
+            int slot = event.getSlot();
+
+            // Ha a kattintott slot kitöltő elem, akkor nem csinálunk semmit
+            if (category.isFiller(slot)) {
                 return;
             }
 
@@ -76,27 +87,27 @@ public class ShopListener implements Listener {
                     }
 
                     CurrencyHandler.deduct(player, buyPrice, currency);
-                    player.getInventory().addItem(ItemStack.of(material));
+                    player.getInventory().addItem(ItemStack.of(clickedItem.getType()));
                 }
 
-                 case RIGHT -> {
+                case RIGHT -> {
                     if (sellPrice == null) return;
 
-                    int amount = InventoryUtils.countItems(player, material);
+                    int amount = InventoryUtils.countItems(player, clickedItem.getType());
 
-                     if (amount == 0) {
-                         player.sendMessage(MessageKeys.NO_ITEM_FOUND.getMessage());
-                         return;
-                     }
+                    if (amount == 0) {
+                        player.sendMessage(MessageKeys.NO_ITEM_FOUND.getMessage());
+                        return;
+                    }
 
                     CurrencyHandler.add(player, sellPrice, currency);
-                    InventoryUtils.hasAndRemove(player, material, 1);
-                 }
+                    InventoryUtils.hasAndRemove(player, clickedItem.getType(), 1);
+                }
 
                 case SHIFT_RIGHT -> {
                     if (sellPrice == null) return;
 
-                    int amount = InventoryUtils.countItems(player, material);
+                    int amount = InventoryUtils.countItems(player, clickedItem.getType());
 
                     if (amount == 0) {
                         player.sendMessage(MessageKeys.NO_ITEM_FOUND.getMessage());
@@ -105,7 +116,7 @@ public class ShopListener implements Listener {
 
                     int allSellPrice = sellPrice * amount;
 
-                    InventoryUtils.hasAndRemove(player, material, amount);
+                    InventoryUtils.hasAndRemove(player, clickedItem.getType(), amount);
                     CurrencyHandler.add(player, allSellPrice, currency);
                 }
             }

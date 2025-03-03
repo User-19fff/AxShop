@@ -16,6 +16,7 @@ public class ShopCategory {
     private final String id;
     private final String displayName;
     private final Map<String, ItemStack> items = new HashMap<>();
+    private final Map<Integer, ItemStack> fillers = new HashMap<>();
     private final Inventory inventory;
 
     public ShopCategory(@NotNull String id, @NotNull String displayName, int size) {
@@ -30,5 +31,14 @@ public class ShopCategory {
     public void addItem(@NotNull String itemId, @NotNull ItemStack item, int slot) {
         items.put(itemId, item);
         inventory.setItem(slot, item);
+    }
+
+    public void addFiller(int slot, @NotNull ItemStack filler) {
+        fillers.put(slot, filler);
+        inventory.setItem(slot, filler);
+    }
+
+    public boolean isFiller(int slot) {
+        return fillers.containsKey(slot);
     }
 }

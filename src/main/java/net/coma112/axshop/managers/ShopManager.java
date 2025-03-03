@@ -5,10 +5,9 @@ import lombok.Getter;
 import net.coma112.axshop.AxShop;
 import net.coma112.axshop.holders.ShopInventoryHolder;
 import net.coma112.axshop.identifiers.CurrencyTypes;
+import net.coma112.axshop.item.ItemBuilder;
 import net.coma112.axshop.processor.LoreProcessor;
 import net.coma112.axshop.processor.MessageProcessor;
-import net.coma112.axshop.utils.InventoryUtils;
-import net.coma112.axshop.utils.ItemBuilder;
 import net.coma112.axshop.utils.LoggerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -18,6 +17,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -108,15 +108,85 @@ public class ShopManager {
     }
 
     private void loadCategoryItems(@NotNull ShopCategory category, @NotNull Map<String, Object> categoryData) {
-        Map<String, Object> items = (Map<String, Object>) categoryData.get("items");
+        // Ellenőrizzük, hogy a "items" mező létezik-e
+        if (categoryData.containsKey("items")) {
+            Map<String, Object> items = (Map<String, Object>) categoryData.get("items");
 
-        items.forEach((itemId, itemData) -> {
-            Map<String, Object> itemMap = (Map<String, Object>) itemData;
-            int slot = (int) itemMap.get("slot");
-            ItemStack item = createItemStack(itemMap);
+            items.forEach((key, value) -> {
+                try {
+                    if (value instanceof Map) {
+                        Map<String, Object> itemData = (Map<String, Object>) value;
 
-            category.addItem(itemId, item, slot);
-        });
+                        // Ha nincs "prices" vagy "currency" mező, akkor ez egy kitöltő elem
+                        if (!itemData.containsKey("prices") && !itemData.containsKey("currency")) {
+                            // Ellenőrizzük, hogy van-e "material" mező
+                            if (itemData.containsKey("material")) {
+                                loadFiller(category, itemData, key);
+                            } else {
+                                LoggerUtils.warn("Filler material is missing for key: " + key);
+                            }
+                        } else {
+                            loadItem(category, itemData, key);
+                        }
+                    }
+                } catch (Exception exception) {
+                    LoggerUtils.warn("Error loading item: " + key + " - " + exception.getMessage());
+                }
+            });
+        }
+    }
+
+    private void loadFiller(@NotNull ShopCategory category, @NotNull Map<String, Object> fillerData, @NotNull String fillerKey) {
+        try {
+            String materialName = (String) fillerData.get("material");
+            if (materialName == null) {
+                LoggerUtils.warn("Filler material is missing for key: " + fillerKey);
+                return;
+            }
+
+            Material material = Material.valueOf(materialName.toUpperCase());
+            String name = MessageProcessor.process((String) fillerData.get("name"));
+            List<String> lore = LoreProcessor.processLore((List<String>) fillerData.get("lore"));
+            String slotString = (String) fillerData.get("slot");
+
+            for (int slot : parseSlots(slotString)) {
+                ItemStack fillerItem = ItemBuilder.createFillerItem(material, name, lore);
+                category.addFiller(slot, fillerItem);
+            }
+        } catch (Exception exception) {
+            LoggerUtils.warn("Error loading filler item: " + exception.getMessage());
+        }
+    }
+
+    private void loadItem(@NotNull ShopCategory category, @NotNull Map<String, Object> itemData, @NotNull String itemKey) {
+        int slot = (int) itemData.get("slot");
+        ItemStack item = createItemStack(itemData);
+        category.addItem(itemKey, item, slot);
+    }
+
+    private int[] parseSlots(@NotNull String slotString) {
+        String[] parts = slotString.split(";");
+        List<Integer> slots = new ArrayList<>();
+
+        for (String part : parts) {
+            if (part.contains("-")) {
+                String[] range = part.split("-");
+                int start = Integer.parseInt(range[0]);
+                int end = Integer.parseInt(range[1]);
+                for (int i = start; i <= end; i++) {
+                    slots.add(i);
+                }
+            } else if (part.contains("&")) {
+                String[] singleSlots = part.split("&");
+                for (String singleSlot : singleSlots) {
+                    slots.add(Integer.parseInt(singleSlot));
+                }
+            } else {
+                slots.add(Integer.parseInt(part));
+            }
+        }
+
+        return slots.stream().mapToInt(i -> i).toArray();
     }
 
     @NotNull

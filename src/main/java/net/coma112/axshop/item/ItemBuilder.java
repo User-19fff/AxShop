@@ -1,4 +1,4 @@
-package net.coma112.axshop.utils;
+package net.coma112.axshop.item;
 
 import lombok.experimental.UtilityClass;
 import net.coma112.axshop.AxShop;
@@ -50,6 +50,18 @@ public class ItemBuilder {
         meta.getPersistentDataContainer().set(BUY_PRICE_KEY, PersistentDataType.INTEGER, buyPrice);
         meta.getPersistentDataContainer().set(SELL_PRICE_KEY, PersistentDataType.INTEGER, sellPrice);
         meta.getPersistentDataContainer().set(CURRENCY_KEY, PersistentDataType.STRING, currency);
+
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    @NotNull
+    public static ItemStack createFillerItem(@NotNull Material material, @NotNull String name, @NotNull List<String> lore) {
+        ItemStack item = new ItemStack(material);
+        ItemMeta meta = item.getItemMeta();
+
+        meta.setDisplayName(name);
+        meta.setLore(lore);
 
         item.setItemMeta(meta);
         return item;
