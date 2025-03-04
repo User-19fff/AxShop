@@ -7,16 +7,15 @@ import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
-@SuppressWarnings("deprecation")
-public class ShopCategory {
+public final class ShopCategory {
     private final String id;
     private final String displayName;
-    private final Map<String, ItemStack> items = new HashMap<>();
-    private final Map<Integer, ItemStack> fillers = new HashMap<>();
+    private final Map<String, ItemStack> items = new ConcurrentHashMap<>();
+    private final Map<Integer, ItemStack> fillers = new ConcurrentHashMap<>();
     private final Inventory inventory;
 
     public ShopCategory(@NotNull String id, @NotNull String displayName, int size) {
@@ -24,7 +23,6 @@ public class ShopCategory {
         this.displayName = displayName;
         ShopInventoryHolder holder = new ShopInventoryHolder(id);
         this.inventory = Bukkit.createInventory(holder, size, displayName);
-
         holder.setInventory(this.inventory);
     }
 

@@ -7,9 +7,11 @@ import org.bukkit.inventory.InventoryHolder;
 import org.jetbrains.annotations.NotNull;
 
 @Getter
-public class ShopInventoryHolder implements InventoryHolder {
+public final class ShopInventoryHolder implements InventoryHolder {
     private final String shopType;
-    @Setter private Inventory inventory;
+
+    @Setter
+    private Inventory inventory;
 
     public ShopInventoryHolder(@NotNull String shopType) {
         this.shopType = shopType;

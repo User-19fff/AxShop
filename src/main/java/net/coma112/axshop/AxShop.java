@@ -9,10 +9,14 @@ import com.github.Anon8281.universalScheduler.UniversalScheduler;
 import com.github.Anon8281.universalScheduler.scheduling.schedulers.TaskScheduler;
 import lombok.Getter;
 import net.coma112.axshop.managers.ShopManager;
+import net.coma112.axshop.utils.LoggerUtils;
 import net.coma112.axshop.utils.RegisterUtils;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 import revxrsal.zapper.ZapperJavaPlugin;
 
 import java.io.File;
+import java.util.concurrent.CompletableFuture;
 
 public final class AxShop extends ZapperJavaPlugin {
     @Getter private static AxShop instance;
@@ -31,12 +35,19 @@ public final class AxShop extends ZapperJavaPlugin {
     public void onEnable() {
         saveDefaultConfig();
         initializeComponents();
-        ShopManager.getInstance().initialize();
+
+        CompletableFuture.runAsync(() -> ShopManager.getInstance().initialize())
+                .thenRun(() -> {
+                    RegisterUtils.registerListeners();
+                    RegisterUtils.loadBasicFormatOverrides();
+                    RegisterUtils.registerHooks();
+                })
+                .exceptionally(exception -> {
+                    LoggerUtils.error("Failed to initialize shop system: " + exception.getMessage());
+                    return null;
+                });
 
         RegisterUtils.registerCommands();
-        RegisterUtils.registerListeners();
-        RegisterUtils.loadBasicFormatOverrides();
-        RegisterUtils.registerHooks();
     }
 
     public Config getConfiguration() {
@@ -44,49 +55,33 @@ public final class AxShop extends ZapperJavaPlugin {
     }
 
     private void initializeComponents() {
-        config = new Config(new File(getDataFolder(), "config.yml"), getResource("config.yml"), GeneralSettings
-                .builder()
+        final GeneralSettings generalSettings = GeneralSettings.builder()
                 .setUseDefaults(false)
-                .build(),
+                .build();
 
-                LoaderSettings
-                        .builder()
-                        .setAutoUpdate(true)
-                        .build(), DumperSettings.DEFAULT,
+        final LoaderSettings loaderSettings = LoaderSettings.builder()
+                .setAutoUpdate(true)
+                .build();
 
-                UpdaterSettings
-                        .builder()
-                        .setKeepAll(true)
-                        .build());
+        final UpdaterSettings updaterSettings = UpdaterSettings.builder()
+                .setKeepAll(true)
+                .build();
 
-        language = new Config(new File(getDataFolder(), "messages.yml"), getResource("messages.yml"), GeneralSettings
-                .builder()
-                .setUseDefaults(false)
-                .build(),
+        config = loadConfig("config.yml", generalSettings, loaderSettings, updaterSettings);
+        language = loadConfig("messages.yml", generalSettings, loaderSettings, updaterSettings);
+        webhook = loadConfig("webhooks.yml", generalSettings, loaderSettings, updaterSettings);
+    }
 
-                LoaderSettings
-                        .builder()
-                        .setAutoUpdate(true)
-                        .build(), DumperSettings.DEFAULT,
-
-                UpdaterSettings
-                        .builder()
-                        .setKeepAll(true)
-                        .build());
-
-        webhook = new Config(new File(getDataFolder(), "webhooks.yml"), getResource("webhooks.yml"), GeneralSettings
-                .builder()
-                .setUseDefaults(false)
-                .build(),
-
-                LoaderSettings
-                        .builder()
-                        .setAutoUpdate(true)
-                        .build(), DumperSettings.DEFAULT,
-
-                UpdaterSettings
-                        .builder()
-                        .setKeepAll(true)
-                        .build());
+    @NotNull
+    @Contract("_, _, _, _ -> new")
+    private Config loadConfig(@NotNull String fileName, @NotNull GeneralSettings generalSettings, @NotNull LoaderSettings loaderSettings, @NotNull UpdaterSettings updaterSettings) {
+        return new Config(
+                new File(getDataFolder(), fileName),
+                getResource(fileName),
+                generalSettings,
+                loaderSettings,
+                DumperSettings.DEFAULT,
+                updaterSettings
+        );
     }
 }

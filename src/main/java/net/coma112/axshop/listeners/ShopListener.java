@@ -7,139 +7,137 @@ import net.coma112.axshop.identifiers.CurrencyTypes;
 import net.coma112.axshop.identifiers.keys.MessageKeys;
 import net.coma112.axshop.managers.ShopCategory;
 import net.coma112.axshop.managers.ShopManager;
-import net.coma112.axshop.registry.CurrencyRegistry;
 import net.coma112.axshop.utils.InventoryUtils;
 import net.coma112.axshop.utils.LoggerUtils;
-import org.bukkit.Material;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
+import org.bukkit.event.inventory.ClickType;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
-import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.util.Objects;
+import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
-public class ShopListener implements Listener {
+public final class ShopListener implements Listener {
     private static final NamespacedKey CATEGORY_KEY = new NamespacedKey(AxShop.getInstance(), "shop-category");
     private static final NamespacedKey BUY_PRICE_KEY = new NamespacedKey(AxShop.getInstance(), "shop-buy-price");
     private static final NamespacedKey SELL_PRICE_KEY = new NamespacedKey(AxShop.getInstance(), "shop-sell-price");
     private static final NamespacedKey CURRENCY_KEY = new NamespacedKey(AxShop.getInstance(), "shop-currency");
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onInventoryClick(@NotNull final InventoryClickEvent event) {
-        Inventory clickedInventory = event.getClickedInventory();
+        final Inventory clickedInventory = event.getClickedInventory();
         if (clickedInventory == null) return;
 
-        InventoryHolder holder = clickedInventory.getHolder();
-        if (!(holder instanceof ShopInventoryHolder shopHolder)) return;
+        if (!(clickedInventory.getHolder() instanceof ShopInventoryHolder shopHolder)) return;
 
         event.setCancelled(true);
 
-        ItemStack clickedItem = event.getCurrentItem();
-        if (clickedItem == null) return;
+        final ItemStack clickedItem = event.getCurrentItem();
+        if (clickedItem == null || clickedItem.getType().isAir()) return;
 
+        handleItemClick(clickedItem, event, shopHolder);
+    }
+
+    private void handleItemClick(@NotNull ItemStack clickedItem, @NotNull InventoryClickEvent event,
+                                 @NotNull ShopInventoryHolder shopHolder) {
         try {
-            ItemMeta meta = clickedItem.getItemMeta();
+            final ItemMeta meta = clickedItem.getItemMeta();
             if (meta == null) return;
 
-            // Ellenőrizzük, hogy a kattintott elem egy kategória-e
-            String categoryId = meta.getPersistentDataContainer().get(CATEGORY_KEY, PersistentDataType.STRING);
+            final PersistentDataContainer container = meta.getPersistentDataContainer();
+
+            final String categoryId = container.get(CATEGORY_KEY, PersistentDataType.STRING);
             if (categoryId != null) {
-                // Megnyitjuk a kategóriát
-                ShopManager.getInstance().getCategory(categoryId).ifPresent(category -> {
-                    event.getWhoClicked().openInventory(category.getInventory());
-                });
+                ShopManager.getInstance().getCategory(categoryId)
+                        .ifPresent(category -> event.getWhoClicked().openInventory(category.getInventory()));
                 return;
             }
 
-            // Ha nem kategória, akkor normál elemként kezeljük
-            ShopCategory category = ShopManager.getInstance().getCategory(shopHolder.getShopType()).orElse(null);
-            if (category == null) return;
+            final Optional<ShopCategory> categoryOpt = ShopManager.getInstance().getCategory(shopHolder.getShopType());
+            if (categoryOpt.isEmpty()) return;
 
-            int slot = event.getSlot();
+            final ShopCategory category = categoryOpt.get();
+            final int slot = event.getSlot();
 
-            // Ha a kattintott slot kitöltő elem, akkor nem csinálunk semmit
-            if (category.isFiller(slot)) {
-                return;
-            }
+            if (category.isFiller(slot)) return;
 
-            CurrencyTypes currency = Objects.requireNonNull(CurrencyTypes.valueOf(meta.getPersistentDataContainer().get(CURRENCY_KEY, PersistentDataType.STRING)));
-            Integer buyPrice = meta.getPersistentDataContainer().get(BUY_PRICE_KEY, PersistentDataType.INTEGER);
-            Integer sellPrice = meta.getPersistentDataContainer().get(SELL_PRICE_KEY, PersistentDataType.INTEGER);
+            final String currencyStr = container.get(CURRENCY_KEY, PersistentDataType.STRING);
+            if (currencyStr == null) return;
 
-            Player player = (Player) event.getWhoClicked();
+            final CurrencyTypes currency = CurrencyTypes.valueOf(currencyStr);
+            final Integer buyPrice = container.get(BUY_PRICE_KEY, PersistentDataType.INTEGER);
+            final Integer sellPrice = container.get(SELL_PRICE_KEY, PersistentDataType.INTEGER);
+            final Player player = (Player) event.getWhoClicked();
+            final ClickType clickType = event.getClick();
 
-            switch (event.getClick()) {
-                case LEFT -> {
-                    if (buyPrice == null) return;
-
-                    if (InventoryUtils.isInventoryFull(player)) {
-                        player.sendMessage(MessageKeys.FULL_INVENTORY.getMessage());
-                        return;
-                    }
-
-                    CurrencyHandler.deduct(player, buyPrice, currency);
-                    player.getInventory().addItem(ItemStack.of(clickedItem.getType()));
-                }
-
-                case RIGHT -> {
-                    if (sellPrice == null) return;
-
-                    int amount = InventoryUtils.countItems(player, clickedItem.getType());
-
-                    if (amount == 0) {
-                        player.sendMessage(MessageKeys.NO_ITEM_FOUND.getMessage());
-                        return;
-                    }
-
-                    CurrencyHandler.add(player, sellPrice, currency);
-                    InventoryUtils.hasAndRemove(player, clickedItem.getType(), 1);
-                }
-
-                case SHIFT_RIGHT -> {
-                    if (sellPrice == null) return;
-
-                    int amount = InventoryUtils.countItems(player, clickedItem.getType());
-
-                    if (amount == 0) {
-                        player.sendMessage(MessageKeys.NO_ITEM_FOUND.getMessage());
-                        return;
-                    }
-
-                    int allSellPrice = sellPrice * amount;
-
-                    InventoryUtils.hasAndRemove(player, clickedItem.getType(), amount);
-                    CurrencyHandler.add(player, allSellPrice, currency);
-                }
+            switch (clickType) {
+                case LEFT -> handleBuyAction(player, clickedItem, buyPrice, currency);
+                case RIGHT -> handleSellAction(player, clickedItem, sellPrice, currency, 1);
+                case SHIFT_RIGHT -> handleSellAction(player, clickedItem, sellPrice, currency,
+                        InventoryUtils.countItems(player, clickedItem.getType()));
+                default -> {}
             }
         } catch (Exception exception) {
-            LoggerUtils.warn("Error handling menu click: " + exception.getMessage());
+            LoggerUtils.warn(exception.getMessage());
         }
     }
 
-    @EventHandler
+    private void handleBuyAction(Player player, ItemStack item, Integer buyPrice, CurrencyTypes currency) {
+        if (buyPrice == null) return;
+
+        if (InventoryUtils.isInventoryFull(player)) {
+            player.sendMessage(MessageKeys.FULL_INVENTORY.getMessage());
+            return;
+        }
+
+        CompletableFuture.runAsync(() -> {
+            CurrencyHandler.deduct(player, buyPrice, currency);
+            AxShop.getInstance().getScheduler().runTask(() ->
+                    player.getInventory().addItem(ItemStack.of(item.getType())));
+        });
+    }
+
+    private void handleSellAction(@NotNull Player player, @NotNull ItemStack item, @Nullable Integer sellPrice,
+                                  @NotNull CurrencyTypes currency, int amount) {
+        if (sellPrice == null) return;
+
+        if (amount <= 0) {
+            player.sendMessage(MessageKeys.NO_ITEM_FOUND.getMessage());
+            return;
+        }
+
+        CompletableFuture.runAsync(() -> {
+            if (InventoryUtils.hasAndRemove(player, item.getType(), amount)) {
+                final int totalSellPrice = sellPrice * amount;
+                CurrencyHandler.add(player, totalSellPrice, currency);
+            } else player.sendMessage(MessageKeys.NO_ITEM_FOUND.getMessage());
+        });
+    }
+
+    @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onInventoryDrag(@NotNull final InventoryDragEvent event) {
-        InventoryHolder holder = event.getInventory().getHolder();
-
-        if (holder instanceof ShopInventoryHolder) event.setCancelled(true);
+        if (event.getInventory().getHolder() instanceof ShopInventoryHolder) event.setCancelled(true);
     }
 
-    @EventHandler
+    @EventHandler(priority = EventPriority.NORMAL)
     public void onInventoryClose(@NotNull final InventoryCloseEvent event) {
-        InventoryHolder holder = event.getInventory().getHolder();
+        if (!(event.getInventory().getHolder() instanceof ShopInventoryHolder shopHolder)) return;
+        if (shopHolder.getShopType().equals("main-menu")) return;
 
-        if (holder instanceof ShopInventoryHolder shopHolder) {
-            Player player = (Player) event.getPlayer();
-
-            if (!shopHolder.getShopType().equals("main-menu")) AxShop.getInstance().getScheduler().runTaskLater(() -> player.openInventory(ShopManager.getInstance().getMainMenu()), 1L);
-        }
+        final Player player = (Player) event.getPlayer();
+        AxShop.getInstance().getScheduler().runTaskLater(() ->
+                player.openInventory(ShopManager.getInstance().getMainMenu()), 1L);
     }
 }
