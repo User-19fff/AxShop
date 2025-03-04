@@ -1,4 +1,4 @@
-package net.coma112.axshop.holders;
+package net.coma112.axshop.holder;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -7,13 +7,13 @@ import org.bukkit.inventory.InventoryHolder;
 import org.jetbrains.annotations.NotNull;
 
 @Getter
-public final class ShopInventoryHolder implements InventoryHolder {
+public final class ShopHolder implements InventoryHolder {
     private final String shopType;
 
     @Setter
     private Inventory inventory;
 
-    public ShopInventoryHolder(@NotNull String shopType) {
+    public ShopHolder(@NotNull String shopType) {
         this.shopType = shopType;
     }
 

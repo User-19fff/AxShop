@@ -7,8 +7,8 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.jetbrains.annotations.NotNull;
 
-public class Vault {
-    @Getter private static Vault instance = new Vault();
+public class VaultService {
+    @Getter private static VaultService instance = new VaultService();
     @Getter private static Economy economy = null;
     private static boolean isRegistered = false;
 

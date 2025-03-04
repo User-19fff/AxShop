@@ -1,7 +1,7 @@
 package net.coma112.axshop.identifiers;
 
 import net.coma112.axshop.identifiers.keys.ConfigKeys;
-import net.coma112.axshop.utils.RegisterUtils;
+import net.coma112.axshop.utils.RegistrationHelper;
 
 import java.text.DecimalFormat;
 import java.util.ArrayList;
@@ -22,7 +22,7 @@ public enum FormatTypes {
             case DOT -> String.format(Locale.ENGLISH, "%,d", price).replace(",", ".");
             case COMMAS -> String.format(Locale.ENGLISH, "%,d", price);
             case BASIC -> {
-                List<Map.Entry<Long, String>> sortedEntries = Collections.synchronizedList(new ArrayList<>(RegisterUtils.getBasicFormatOverrides().entrySet()));
+                List<Map.Entry<Long, String>> sortedEntries = Collections.synchronizedList(new ArrayList<>(RegistrationHelper.getBasicFormatOverrides().entrySet()));
 
                 sortedEntries.sort(Collections.reverseOrder(Map.Entry.comparingByKey()));
 

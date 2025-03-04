@@ -3,9 +3,9 @@ package net.coma112.axshop.managers;
 import com.artillexstudios.axapi.config.Config;
 import lombok.Getter;
 import net.coma112.axshop.AxShop;
-import net.coma112.axshop.holders.ShopInventoryHolder;
+import net.coma112.axshop.holder.ShopHolder;
 import net.coma112.axshop.identifiers.CurrencyTypes;
-import net.coma112.axshop.item.ItemBuilder;
+import net.coma112.axshop.item.ItemFactory;
 import net.coma112.axshop.processor.LoreProcessor;
 import net.coma112.axshop.processor.MessageProcessor;
 import net.coma112.axshop.utils.LoggerUtils;
@@ -26,12 +26,12 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
-public final class ShopManager {
+public final class ShopService {
     @Getter
-    private static final ShopManager instance = new ShopManager();
+    private static final ShopService instance = new ShopService();
 
     private final Map<String, Inventory> menus = new ConcurrentHashMap<>();
-    private final Map<String, ShopCategory> categories = new ConcurrentHashMap<>();
+    private final Map<String, CategoryManager> categories = new ConcurrentHashMap<>();
     private Inventory mainMenuInventory;
 
     public void initialize() {
@@ -49,7 +49,7 @@ public final class ShopManager {
     }
 
     @NotNull
-    public Optional<ShopCategory> getCategory(@NotNull String name) {
+    public Optional<CategoryManager> getCategory(@NotNull String name) {
         return Optional.ofNullable(categories.get(name));
     }
 
@@ -58,7 +58,7 @@ public final class ShopManager {
         final int size = config.getInt("main-menu.size", 27);
         final String title = MessageProcessor.process(config.getString("main-menu.name", "Shop Menu"));
 
-        final ShopInventoryHolder holder = new ShopInventoryHolder("main-menu");
+        final ShopHolder holder = new ShopHolder("main-menu");
         mainMenuInventory = Bukkit.createInventory(holder, size, title);
 
         holder.setInventory(mainMenuInventory);
@@ -83,7 +83,7 @@ public final class ShopManager {
                 @SuppressWarnings("unchecked")
                 final List<String> lore = LoreProcessor.processLore((List<String>) itemData.get("lore"));
 
-                final ItemStack item = ItemBuilder.createCategoryItem(material, name, lore, categoryKey);
+                final ItemStack item = ItemFactory.createCategoryItem(material, name, lore, categoryKey);
                 inventory.setItem((int) itemData.get("slot"), item);
             } catch (Exception exception) {
                 LoggerUtils.warn(exception.getMessage());
@@ -99,7 +99,7 @@ public final class ShopManager {
                     final String categoryKey = rawKey.toString();
                     final Map<String, Object> categoryData = convertToGenericMap(rawValue);
 
-                    final ShopCategory category = new ShopCategory(
+                    final CategoryManager category = new CategoryManager(
                             categoryKey,
                             MessageProcessor.process((String) categoryData.get("name")),
                             (int) categoryData.get("size")
@@ -114,7 +114,7 @@ public final class ShopManager {
         });
     }
 
-    private void loadCategoryItems(@NotNull ShopCategory category, @NotNull Map<String, Object> categoryData) {
+    private void loadCategoryItems(@NotNull CategoryManager category, @NotNull Map<String, Object> categoryData) {
         if (!categoryData.containsKey("items")) {
             return;
         }
@@ -138,7 +138,7 @@ public final class ShopManager {
         });
     }
 
-    private void loadFiller(@NotNull ShopCategory category, @NotNull Map<String, Object> fillerData, @NotNull String fillerKey) {
+    private void loadFiller(@NotNull CategoryManager category, @NotNull Map<String, Object> fillerData, @NotNull String fillerKey) {
         try {
             final String materialName = (String) fillerData.get("material");
 
@@ -153,7 +153,7 @@ public final class ShopManager {
             final List<String> lore = LoreProcessor.processLore((List<String>) fillerData.get("lore"));
 
             final String slotString = (String) fillerData.get("slot");
-            final ItemStack fillerItem = ItemBuilder.createFillerItem(material, name, lore);
+            final ItemStack fillerItem = ItemFactory.createFillerItem(material, name, lore);
 
             parseSlots(slotString).forEach(slot -> category.addFiller(slot, fillerItem));
         } catch (Exception exception) {
@@ -161,7 +161,7 @@ public final class ShopManager {
         }
     }
 
-    private void loadItem(@NotNull ShopCategory category, @NotNull Map<String, Object> itemData, @NotNull String itemKey) {
+    private void loadItem(@NotNull CategoryManager category, @NotNull Map<String, Object> itemData, @NotNull String itemKey) {
         final int slot = (int) itemData.get("slot");
         final ItemStack item = createItemStack(itemData);
         category.addItem(itemKey, item, slot);
@@ -208,7 +208,7 @@ public final class ShopManager {
                 sellPrice,
                 currency);
 
-        return ItemBuilder.createShopItem(
+        return ItemFactory.createShopItem(
                 material,
                 name,
                 lore,

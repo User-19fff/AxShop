@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Arrays;
 
 @UtilityClass
-public class InventoryUtils {
+public class InventoryHelper {
     public boolean isInventoryFull(@NotNull Player player) {
         return player.getInventory().firstEmpty() == -1;
     }

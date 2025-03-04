@@ -1,13 +1,11 @@
 package net.coma112.axshop.commands;
 
-import com.artillexstudios.axapi.libs.boostedyaml.boostedyaml.block.implementation.Section;
-import com.artillexstudios.axapi.libs.boostedyaml.boostedyaml.route.Route;
 import net.coma112.axshop.AxShop;
 import net.coma112.axshop.identifiers.FormatTypes;
 import net.coma112.axshop.identifiers.keys.ConfigKeys;
 import net.coma112.axshop.identifiers.keys.MessageKeys;
-import net.coma112.axshop.managers.ShopManager;
-import net.coma112.axshop.utils.InventoryUtils;
+import net.coma112.axshop.managers.ShopService;
+import net.coma112.axshop.utils.InventoryHelper;
 import org.bukkit.Material;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -22,7 +20,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @SuppressWarnings("unchecked")
-public class CommandShop implements OrphanCommand {
+public class ShopCommand implements OrphanCommand {
     private static final AxShop plugin = AxShop.getInstance();
 
     @Subcommand("reload")
@@ -31,7 +29,7 @@ public class CommandShop implements OrphanCommand {
         plugin.getConfiguration().reload();
         plugin.getLanguage().reload();
         plugin.getWebhook().reload();
-        ShopManager.getInstance().initialize();
+        ShopService.getInstance().initialize();
         sender.sendMessage(MessageKeys.RELOAD.getMessage());
     }
 
@@ -44,7 +42,7 @@ public class CommandShop implements OrphanCommand {
             return;
         }
 
-        ShopManager.getInstance().getMenu("main-menu").ifPresentOrElse(
+        ShopService.getInstance().getMenu("main-menu").ifPresentOrElse(
                 player::openInventory,
                 () -> player.sendMessage(MessageKeys.MENU_NOT_LOADED.getMessage())
         );
@@ -79,7 +77,7 @@ public class CommandShop implements OrphanCommand {
                     if (prices == null || !prices.containsKey("sell")) continue;
                     int sellPrice = (int) prices.get("sell");
 
-                    int itemCount = InventoryUtils.countItems(player, material);
+                    int itemCount = InventoryHelper.countItems(player, material);
                     if (itemCount == 0) continue;
 
                     int itemWorth = itemCount * sellPrice;

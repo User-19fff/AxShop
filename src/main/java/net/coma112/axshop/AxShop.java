@@ -8,9 +8,9 @@ import com.artillexstudios.axapi.libs.boostedyaml.boostedyaml.settings.updater.U
 import com.github.Anon8281.universalScheduler.UniversalScheduler;
 import com.github.Anon8281.universalScheduler.scheduling.schedulers.TaskScheduler;
 import lombok.Getter;
-import net.coma112.axshop.managers.ShopManager;
+import net.coma112.axshop.managers.ShopService;
 import net.coma112.axshop.utils.LoggerUtils;
-import net.coma112.axshop.utils.RegisterUtils;
+import net.coma112.axshop.utils.RegistrationHelper;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import revxrsal.zapper.ZapperJavaPlugin;
@@ -36,18 +36,17 @@ public final class AxShop extends ZapperJavaPlugin {
         saveDefaultConfig();
         initializeComponents();
 
-        CompletableFuture.runAsync(() -> ShopManager.getInstance().initialize())
-                .thenRun(() -> {
-                    RegisterUtils.registerListeners();
-                    RegisterUtils.loadBasicFormatOverrides();
-                    RegisterUtils.registerHooks();
+        CompletableFuture.runAsync(() -> ShopService.getInstance().initialize()).thenRun(() -> {
+                    RegistrationHelper.registerListeners();
+                    RegistrationHelper.loadBasicFormatOverrides();
+                    RegistrationHelper.registerHooks();
                 })
                 .exceptionally(exception -> {
                     LoggerUtils.error("Failed to initialize shop system: " + exception.getMessage());
                     return null;
                 });
 
-        RegisterUtils.registerCommands();
+        RegistrationHelper.registerCommands();
     }
 
     public Config getConfiguration() {

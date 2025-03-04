@@ -17,7 +17,7 @@ import java.util.function.UnaryOperator;
 import java.util.stream.Collectors;
 
 @SuppressWarnings("deprecation")
-public final class ItemBuilder {
+public final class ItemFactory {
     private static final NamespacedKey CATEGORY_KEY = new NamespacedKey(AxShop.getInstance(), "shop-category");
     private static final NamespacedKey BUY_PRICE_KEY = new NamespacedKey(AxShop.getInstance(), "shop-buy-price");
     private static final NamespacedKey SELL_PRICE_KEY = new NamespacedKey(AxShop.getInstance(), "shop-sell-price");

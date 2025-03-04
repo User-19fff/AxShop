@@ -1,4 +1,4 @@
-package net.coma112.axshop.handlers;
+package net.coma112.axshop.commands;
 
 import net.coma112.axshop.identifiers.keys.MessageKeys;
 import org.jetbrains.annotations.NotNull;
@@ -7,7 +7,7 @@ import revxrsal.commands.locales.LocaleReader;
 import java.util.Locale;
 
 @SuppressWarnings("deprecation")
-public class CommandExceptionHandler implements LocaleReader {
+public class CommandErrorHandler implements LocaleReader {
     @Override
     public boolean containsKey(@NotNull String string) {
         return true;

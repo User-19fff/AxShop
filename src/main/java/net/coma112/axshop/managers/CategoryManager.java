@@ -1,7 +1,7 @@
 package net.coma112.axshop.managers;
 
 import lombok.Getter;
-import net.coma112.axshop.holders.ShopInventoryHolder;
+import net.coma112.axshop.holder.ShopHolder;
 import org.bukkit.Bukkit;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
@@ -11,17 +11,17 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
-public final class ShopCategory {
+public final class CategoryManager {
     private final String id;
     private final String displayName;
     private final Map<String, ItemStack> items = new ConcurrentHashMap<>();
     private final Map<Integer, ItemStack> fillers = new ConcurrentHashMap<>();
     private final Inventory inventory;
 
-    public ShopCategory(@NotNull String id, @NotNull String displayName, int size) {
+    public CategoryManager(@NotNull String id, @NotNull String displayName, int size) {
         this.id = id;
         this.displayName = displayName;
-        ShopInventoryHolder holder = new ShopInventoryHolder(id);
+        ShopHolder holder = new ShopHolder(id);
         this.inventory = Bukkit.createInventory(holder, size, displayName);
         holder.setInventory(this.inventory);
     }

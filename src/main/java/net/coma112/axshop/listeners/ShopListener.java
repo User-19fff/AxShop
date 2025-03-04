@@ -2,12 +2,12 @@ package net.coma112.axshop.listeners;
 
 import net.coma112.axshop.AxShop;
 import net.coma112.axshop.handlers.CurrencyHandler;
-import net.coma112.axshop.holders.ShopInventoryHolder;
+import net.coma112.axshop.holder.ShopHolder;
 import net.coma112.axshop.identifiers.CurrencyTypes;
 import net.coma112.axshop.identifiers.keys.MessageKeys;
-import net.coma112.axshop.managers.ShopCategory;
-import net.coma112.axshop.managers.ShopManager;
-import net.coma112.axshop.utils.InventoryUtils;
+import net.coma112.axshop.managers.CategoryManager;
+import net.coma112.axshop.managers.ShopService;
+import net.coma112.axshop.utils.InventoryHelper;
 import net.coma112.axshop.utils.LoggerUtils;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
@@ -40,7 +40,7 @@ public final class ShopListener implements Listener {
         final Inventory clickedInventory = event.getClickedInventory();
         if (clickedInventory == null) return;
 
-        if (!(clickedInventory.getHolder() instanceof ShopInventoryHolder shopHolder)) return;
+        if (!(clickedInventory.getHolder() instanceof ShopHolder shopHolder)) return;
 
         event.setCancelled(true);
 
@@ -51,7 +51,7 @@ public final class ShopListener implements Listener {
     }
 
     private void handleItemClick(@NotNull ItemStack clickedItem, @NotNull InventoryClickEvent event,
-                                 @NotNull ShopInventoryHolder shopHolder) {
+                                 @NotNull ShopHolder shopHolder) {
         try {
             final ItemMeta meta = clickedItem.getItemMeta();
             if (meta == null) return;
@@ -60,15 +60,15 @@ public final class ShopListener implements Listener {
 
             final String categoryId = container.get(CATEGORY_KEY, PersistentDataType.STRING);
             if (categoryId != null) {
-                ShopManager.getInstance().getCategory(categoryId)
+                ShopService.getInstance().getCategory(categoryId)
                         .ifPresent(category -> event.getWhoClicked().openInventory(category.getInventory()));
                 return;
             }
 
-            final Optional<ShopCategory> categoryOpt = ShopManager.getInstance().getCategory(shopHolder.getShopType());
+            final Optional<CategoryManager> categoryOpt = ShopService.getInstance().getCategory(shopHolder.getShopType());
             if (categoryOpt.isEmpty()) return;
 
-            final ShopCategory category = categoryOpt.get();
+            final CategoryManager category = categoryOpt.get();
             final int slot = event.getSlot();
 
             if (category.isFiller(slot)) return;
@@ -86,7 +86,7 @@ public final class ShopListener implements Listener {
                 case LEFT -> handleBuyAction(player, clickedItem, buyPrice, currency);
                 case RIGHT -> handleSellAction(player, clickedItem, sellPrice, currency, 1);
                 case SHIFT_RIGHT -> handleSellAction(player, clickedItem, sellPrice, currency,
-                        InventoryUtils.countItems(player, clickedItem.getType()));
+                        InventoryHelper.countItems(player, clickedItem.getType()));
                 default -> {}
             }
         } catch (Exception exception) {
@@ -97,7 +97,7 @@ public final class ShopListener implements Listener {
     private void handleBuyAction(Player player, ItemStack item, Integer buyPrice, CurrencyTypes currency) {
         if (buyPrice == null) return;
 
-        if (InventoryUtils.isInventoryFull(player)) {
+        if (InventoryHelper.isInventoryFull(player)) {
             player.sendMessage(MessageKeys.FULL_INVENTORY.getMessage());
             return;
         }
@@ -119,7 +119,7 @@ public final class ShopListener implements Listener {
         }
 
         CompletableFuture.runAsync(() -> {
-            if (InventoryUtils.hasAndRemove(player, item.getType(), amount)) {
+            if (InventoryHelper.hasAndRemove(player, item.getType(), amount)) {
                 final int totalSellPrice = sellPrice * amount;
                 CurrencyHandler.add(player, totalSellPrice, currency);
             } else player.sendMessage(MessageKeys.NO_ITEM_FOUND.getMessage());
@@ -128,16 +128,16 @@ public final class ShopListener implements Listener {
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onInventoryDrag(@NotNull final InventoryDragEvent event) {
-        if (event.getInventory().getHolder() instanceof ShopInventoryHolder) event.setCancelled(true);
+        if (event.getInventory().getHolder() instanceof ShopHolder) event.setCancelled(true);
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onInventoryClose(@NotNull final InventoryCloseEvent event) {
-        if (!(event.getInventory().getHolder() instanceof ShopInventoryHolder shopHolder)) return;
+        if (!(event.getInventory().getHolder() instanceof ShopHolder shopHolder)) return;
         if (shopHolder.getShopType().equals("main-menu")) return;
 
         final Player player = (Player) event.getPlayer();
         AxShop.getInstance().getScheduler().runTaskLater(() ->
-                player.openInventory(ShopManager.getInstance().getMainMenu()), 1L);
+                player.openInventory(ShopService.getInstance().getMainMenu()), 1L);
     }
 }
