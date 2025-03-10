@@ -8,7 +8,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 public class PlayerPointsService {
-    @Getter private static PlayerPointsService instance = new PlayerPointsService();
+    @Getter private final static PlayerPointsService instance = new PlayerPointsService();
     private PlayerPointsAPI api;
     private static boolean isRegistered = false;
 

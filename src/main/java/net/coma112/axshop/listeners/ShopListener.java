@@ -2,11 +2,14 @@ package net.coma112.axshop.listeners;
 
 import net.coma112.axshop.AxShop;
 import net.coma112.axshop.handlers.CurrencyHandler;
+import net.coma112.axshop.holder.QuantitySelectorHolder;
 import net.coma112.axshop.holder.ShopHolder;
 import net.coma112.axshop.identifiers.CurrencyTypes;
 import net.coma112.axshop.identifiers.keys.MessageKeys;
 import net.coma112.axshop.managers.CategoryManager;
+import net.coma112.axshop.managers.QuantitySelectorManager;
 import net.coma112.axshop.managers.ShopService;
+import net.coma112.axshop.processor.MessageProcessor;
 import net.coma112.axshop.utils.InventoryHelper;
 import net.coma112.axshop.utils.LoggerUtils;
 import org.bukkit.NamespacedKey;
@@ -40,18 +43,93 @@ public final class ShopListener implements Listener {
         final Inventory clickedInventory = event.getClickedInventory();
         if (clickedInventory == null) return;
 
-        if (!(clickedInventory.getHolder() instanceof ShopHolder shopHolder)) return;
+        if (clickedInventory.getHolder() instanceof ShopHolder shopHolder) {
+            event.setCancelled(true);
 
-        event.setCancelled(true);
+            final ItemStack clickedItem = event.getCurrentItem();
+            if (clickedItem == null || clickedItem.getType().isAir()) return;
 
-        final ItemStack clickedItem = event.getCurrentItem();
-        if (clickedItem == null || clickedItem.getType().isAir()) return;
+            handleShopItemClick(clickedItem, event, shopHolder);
+        } else if (clickedInventory.getHolder() instanceof QuantitySelectorHolder holder) {
+            event.setCancelled(true);
 
-        handleItemClick(clickedItem, event, shopHolder);
+            final int slot = event.getSlot();
+            final Player player = (Player) event.getWhoClicked();
+
+            handleQuantitySelectorClick(slot, player, holder);
+        }
     }
 
-    private void handleItemClick(@NotNull ItemStack clickedItem, @NotNull InventoryClickEvent event,
-                                 @NotNull ShopHolder shopHolder) {
+    private void handleQuantitySelectorClick(int slot, @NotNull Player player,
+                                             @NotNull QuantitySelectorHolder holder) {
+        QuantitySelectorManager manager = QuantitySelectorManager.getInstance();
+
+        if (manager.isDecreaseButton(slot)) {
+            int amount = manager.getDecreaseAmount(slot);
+            holder.decreaseQuantity(amount);
+            manager.updateInventory(holder);
+        }
+        else if (manager.isIncreaseButton(slot)) {
+            int amount = manager.getIncreaseAmount(slot);
+            holder.increaseQuantity(amount);
+            manager.updateInventory(holder);
+        }
+        else if (manager.isConfirmButton(slot)) {
+            handleBuyConfirmation(player, holder);
+        }
+        else if (manager.isCancelButton(slot)) {
+            // Return to previous shop menu
+            final String shopType = holder.getShopType();
+            Optional<CategoryManager> category = ShopService.getInstance().getCategory(shopType);
+            if (category.isPresent()) {
+                player.openInventory(category.get().getInventory());
+            } else {
+                player.openInventory(ShopService.getInstance().getMainMenu());
+            }
+        }
+    }
+
+    private void handleBuyConfirmation(@NotNull Player player, @NotNull QuantitySelectorHolder holder) {
+        if (InventoryHelper.isInventoryFull(player)) {
+            player.sendMessage(MessageKeys.FULL_INVENTORY.getMessage());
+            return;
+        }
+
+        final int quantity = holder.getQuantity();
+        final int totalPrice = holder.getTotalPrice();
+        final CurrencyTypes currency = CurrencyTypes.valueOf(holder.getCurrency());
+        final ItemStack item = holder.getItem();
+
+        CompletableFuture.runAsync(() -> {
+            // Attempt to deduct currency
+            if (CurrencyHandler.deduct(player, totalPrice, currency)) {
+                AxShop.getInstance().getScheduler().runTask(() -> {
+                    // Create an ItemStack with the correct quantity
+                    ItemStack purchasedItems = new ItemStack(item.getType(), quantity);
+                    // Add to player's inventory, dropping leftovers if needed
+                    player.getInventory().addItem(purchasedItems)
+                            .forEach((index, leftover) -> player.getWorld().dropItem(player.getLocation(), leftover));
+                    player.sendMessage(MessageProcessor.process(
+                            "&aSuccessfully purchased &e" + quantity + "x " + item.getType().name().toLowerCase() +
+                                    " &afor &e" + totalPrice + " " + currency.name()));
+
+                    // Return to previous shop menu
+                    final String shopType = holder.getShopType();
+                    Optional<CategoryManager> category = ShopService.getInstance().getCategory(shopType);
+                    if (category.isPresent()) {
+                        player.openInventory(category.get().getInventory());
+                    } else {
+                        player.openInventory(ShopService.getInstance().getMainMenu());
+                    }
+                });
+            } else {
+                player.sendMessage(MessageProcessor.process("&cNot enough currency to complete this purchase!"));
+            }
+        });
+    }
+
+    private void handleShopItemClick(@NotNull ItemStack clickedItem, @NotNull InventoryClickEvent event,
+                                     @NotNull ShopHolder shopHolder) {
         try {
             final ItemMeta meta = clickedItem.getItemMeta();
             if (meta == null) return;
@@ -83,7 +161,13 @@ public final class ShopListener implements Listener {
             final ClickType clickType = event.getClick();
 
             switch (clickType) {
-                case LEFT -> handleBuyAction(player, clickedItem, buyPrice, currency);
+                case LEFT -> {
+                    // For buy actions, now open quantity selector
+                    if (buyPrice != null) {
+                        QuantitySelectorManager.getInstance().openQuantitySelector(
+                                player, clickedItem, buyPrice, currencyStr);
+                    }
+                }
                 case RIGHT -> handleSellAction(player, clickedItem, sellPrice, currency, 1);
                 case SHIFT_RIGHT -> handleSellAction(player, clickedItem, sellPrice, currency,
                         InventoryHelper.countItems(player, clickedItem.getType()));
@@ -103,14 +187,16 @@ public final class ShopListener implements Listener {
         }
 
         CompletableFuture.runAsync(() -> {
-            CurrencyHandler.deduct(player, buyPrice, currency);
-            AxShop.getInstance().getScheduler().runTask(() ->
-                    player.getInventory().addItem(ItemStack.of(item.getType())));
+            if (CurrencyHandler.deduct(player, buyPrice, currency)) {
+                AxShop.getInstance().getScheduler().runTask(() ->
+                        player.getInventory().addItem(ItemStack.of(item.getType())));
+            } else {
+                player.sendMessage(MessageProcessor.process("&cNot enough currency!"));
+            }
         });
     }
 
-    private void handleSellAction(@NotNull Player player, @NotNull ItemStack item, @Nullable Integer sellPrice,
-                                  @NotNull CurrencyTypes currency, int amount) {
+    private void handleSellAction(@NotNull Player player, @NotNull ItemStack item, @Nullable Integer sellPrice, @NotNull CurrencyTypes currency, int amount) {
         if (sellPrice == null) return;
 
         if (amount <= 0) {
@@ -122,22 +208,29 @@ public final class ShopListener implements Listener {
             if (InventoryHelper.hasAndRemove(player, item.getType(), amount)) {
                 final int totalSellPrice = sellPrice * amount;
                 CurrencyHandler.add(player, totalSellPrice, currency);
+                player.sendMessage(MessageProcessor.process(
+                        "&aSuccessfully sold &e" + amount + "x " + item.getType().name().toLowerCase() +
+                                " &afor &e" + totalSellPrice + " " + currency.name()));
             } else player.sendMessage(MessageKeys.NO_ITEM_FOUND.getMessage());
         });
     }
 
     @EventHandler(priority = EventPriority.HIGH, ignoreCancelled = true)
     public void onInventoryDrag(@NotNull final InventoryDragEvent event) {
-        if (event.getInventory().getHolder() instanceof ShopHolder) event.setCancelled(true);
+        if (event.getInventory().getHolder() instanceof ShopHolder ||
+                event.getInventory().getHolder() instanceof QuantitySelectorHolder) {
+            event.setCancelled(true);
+        }
     }
 
     @EventHandler(priority = EventPriority.NORMAL)
     public void onInventoryClose(@NotNull final InventoryCloseEvent event) {
-        if (!(event.getInventory().getHolder() instanceof ShopHolder shopHolder)) return;
-        if (shopHolder.getShopType().equals("main-menu")) return;
+        if (event.getInventory().getHolder() instanceof ShopHolder shopHolder) {
+            if (shopHolder.getShopType().equals("main-menu")) return;
 
-        final Player player = (Player) event.getPlayer();
-        AxShop.getInstance().getScheduler().runTaskLater(() ->
-                player.openInventory(ShopService.getInstance().getMainMenu()), 1L);
+            final Player player = (Player) event.getPlayer();
+            AxShop.getInstance().getScheduler().runTaskLater(() ->
+                    player.openInventory(ShopService.getInstance().getMainMenu()), 1L);
+        }
     }
 }

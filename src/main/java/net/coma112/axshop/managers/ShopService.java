@@ -27,8 +27,7 @@ import java.util.stream.IntStream;
 
 @SuppressWarnings({"unchecked", "rawtypes", "deprecation"})
 public final class ShopService {
-    @Getter
-    private static final ShopService instance = new ShopService();
+    @Getter private static final ShopService instance = new ShopService();
 
     private final Map<String, Inventory> menus = new ConcurrentHashMap<>();
     private final Map<String, CategoryManager> categories = new ConcurrentHashMap<>();

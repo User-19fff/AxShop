@@ -24,6 +24,16 @@ public class CurrencyHandler {
         provider.deduct(player, amount);
     }
 
+    public static boolean deduct(@NotNull Player player, int amount, @NotNull CurrencyTypes currency) {
+        boolean success = true;
+
+        if (success) return true;
+        else {
+            player.sendMessage(MessageKeys.NOT_ENOUGH_MONEY.getMessage());
+            return false;
+        }
+    }
+
     public static void add(@NotNull Player player, double amount, @NotNull CurrencyTypes currency) {
         var provider = CurrencyRegistryService.get(currency);
 

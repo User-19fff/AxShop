@@ -28,7 +28,6 @@ public class ShopCommand implements OrphanCommand {
     public void reload(@NotNull CommandSender sender) {
         plugin.getConfiguration().reload();
         plugin.getLanguage().reload();
-        plugin.getWebhook().reload();
         ShopService.getInstance().initialize();
         sender.sendMessage(MessageKeys.RELOAD.getMessage());
     }

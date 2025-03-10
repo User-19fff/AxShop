@@ -121,3 +121,70 @@ shops:
             - "&eShift + Right click &8» &6&lSELL ALL"
             - ""
             - "&eValuta: &6{currency}"
+
+quantity-selector:
+  name: "&aVásárlási mennyiség"
+  size: 27
+  preview-slot: 13
+  quantity-display:
+    slot: 4
+    material: "PAPER"
+    name: "&aMennyiség: &e{quantity} db"
+    lore:
+      - ""
+      - "&7Teljes ár: &6${total_price}"
+  decrease-buttons:
+    decrease-1:
+      material: "RED_STAINED_GLASS_PANE"
+      name: "&c-1"
+      slot: 11
+      lore:
+        - "&7Kattints a mennyiség csökkentéséhez"
+    decrease-32:
+      material: "RED_STAINED_GLASS_PANE"
+      name: "&c-32"
+      slot: 10
+      lore:
+        - "&7Kattints a mennyiség csökkentéséhez"
+    decrease-64:
+      material: "RED_STAINED_GLASS_PANE"
+      name: "&c-64"
+      slot: 9
+      lore:
+        - "&7Kattints a mennyiség csökkentéséhez"
+  increase-buttons:
+    increase-1:
+      material: "LIME_STAINED_GLASS_PANE"
+      name: "&a+1"
+      slot: 15
+      lore:
+        - "&7Kattints a mennyiség növeléséhez"
+    increase-32:
+      material: "LIME_STAINED_GLASS_PANE"
+      name: "&a+32"
+      slot: 16
+      lore:
+        - "&7Kattints a mennyiség növeléséhez"
+    increase-64:
+      material: "LIME_STAINED_GLASS_PANE"
+      name: "&a+64"
+      slot: 17
+      lore:
+        - "&7Kattints a mennyiség növeléséhez"
+  confirm:
+    material: "EMERALD_BLOCK"
+    name: "&aVásárlás megerősítése"
+    slot: 22
+    lore:
+      - "&7Kattints a vásárlás megerősítéséhez"
+      - "&7Mennyiség: &e{quantity} db"
+      - "&7Teljes ár: &6${total_price}"
+  cancel:
+    material: "REDSTONE_BLOCK"
+    name: "&cMégse"
+    slot: 21
+    lore:
+      - "&7Kattints a vásárlás megszakításához"
+  filler:
+    material: "BLACK_STAINED_GLASS_PANE"
+    name: ""

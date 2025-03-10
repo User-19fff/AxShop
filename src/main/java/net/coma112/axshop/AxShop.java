@@ -19,11 +19,10 @@ import java.io.File;
 import java.util.concurrent.CompletableFuture;
 
 public final class AxShop extends ZapperJavaPlugin {
-    @Getter private static AxShop instance;
-    @Getter private TaskScheduler scheduler;
-    @Getter private Config language;
-    @Getter private Config webhook;
-    private Config config;
+    @Getter static AxShop instance;
+    @Getter TaskScheduler scheduler;
+    @Getter Config language;
+    Config config;
 
     @Override
     public void onLoad() {
@@ -68,7 +67,6 @@ public final class AxShop extends ZapperJavaPlugin {
 
         config = loadConfig("config.yml", generalSettings, loaderSettings, updaterSettings);
         language = loadConfig("messages.yml", generalSettings, loaderSettings, updaterSettings);
-        webhook = loadConfig("webhooks.yml", generalSettings, loaderSettings, updaterSettings);
     }
 
     @NotNull

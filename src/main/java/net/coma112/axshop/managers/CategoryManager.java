@@ -11,6 +11,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
+@SuppressWarnings("deprecation")
 public final class CategoryManager {
     private final String id;
     private final String displayName;
