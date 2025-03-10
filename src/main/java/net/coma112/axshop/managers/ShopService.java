@@ -68,7 +68,7 @@ public final class ShopService {
         menus.put("main-menu", mainMenuInventory);
     }
 
-    private void processCategoryItem(Inventory inventory, @NotNull Map<Object, Object> categoryData) {
+    private void processCategoryItem(@NotNull Inventory inventory, @NotNull Map<Object, Object> categoryData) {
         categoryData.forEach((rawKey, rawValue) -> {
             try {
                 final String categoryKey = rawKey.toString();

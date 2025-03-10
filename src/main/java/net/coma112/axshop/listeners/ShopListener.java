@@ -96,30 +96,21 @@ public final class ShopListener implements Listener {
         final ItemStack item = holder.getItem();
 
         CompletableFuture.runAsync(() -> {
-            // Attempt to deduct currency
             if (CurrencyHandler.deduct(player, totalPrice, currency)) {
                 AxShop.getInstance().getScheduler().runTask(() -> {
-                    // Create an ItemStack with the correct quantity
                     ItemStack purchasedItems = new ItemStack(item.getType(), quantity);
-                    // Add to player's inventory, dropping leftovers if needed
                     player.getInventory().addItem(purchasedItems)
                             .forEach((index, leftover) -> player.getWorld().dropItem(player.getLocation(), leftover));
                     player.sendMessage(MessageProcessor.process(
                             "&aSuccessfully purchased &e" + quantity + "x " + item.getType().name().toLowerCase() +
                                     " &afor &e" + totalPrice + " " + currency.name()));
 
-                    // Return to previous shop menu
                     final String shopType = holder.getShopType();
                     Optional<CategoryManager> category = ShopService.getInstance().getCategory(shopType);
-                    if (category.isPresent()) {
-                        player.openInventory(category.get().getInventory());
-                    } else {
-                        player.openInventory(ShopService.getInstance().getMainMenu());
-                    }
+                    if (category.isPresent()) player.openInventory(category.get().getInventory());
+                    else player.openInventory(ShopService.getInstance().getMainMenu());
                 });
-            } else {
-                player.sendMessage(MessageProcessor.process("&cNot enough currency to complete this purchase!"));
-            }
+            } //else player.sendMessage(MessageProcessor.process("&cNot enough currency to complete this purchase!"));
         });
     }
 

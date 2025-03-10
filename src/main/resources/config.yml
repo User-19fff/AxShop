@@ -174,7 +174,7 @@ quantity-selector:
   confirm:
     material: "EMERALD_BLOCK"
     name: "&aVásárlás megerősítése"
-    slot: 22
+    slot: 23
     lore:
       - "&7Kattints a vásárlás megerősítéséhez"
       - "&7Mennyiség: &e{quantity} db"

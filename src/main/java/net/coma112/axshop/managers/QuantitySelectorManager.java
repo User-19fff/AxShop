@@ -12,20 +12,20 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("deprecation")
 public final class QuantitySelectorManager {
     @Getter private static final QuantitySelectorManager instance = new QuantitySelectorManager();
 
     private final Config config;
-    private final Map<Integer, Integer> decreaseAmounts = new HashMap<>();
-    private final Map<Integer, Integer> increaseAmounts = new HashMap<>();
+    private final ConcurrentHashMap<Integer, Integer> decreaseAmounts = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, Integer> increaseAmounts = new ConcurrentHashMap<>();
     private int confirmSlot;
     private int cancelSlot;
     private int quantityDisplaySlot;
@@ -43,8 +43,8 @@ public final class QuantitySelectorManager {
                 int slot = config.getInt(path + ".slot");
                 int amount = Integer.parseInt(key.split("-")[1]);
                 decreaseAmounts.put(slot, amount);
-            } catch (Exception e) {
-                LoggerUtils.warn("Error loading decrease button: " + e.getMessage());
+            } catch (Exception exception) {
+                LoggerUtils.warn(exception.getMessage());
             }
         });
 
@@ -54,8 +54,8 @@ public final class QuantitySelectorManager {
                 int slot = config.getInt(path + ".slot");
                 int amount = Integer.parseInt(key.split("-")[1]);
                 increaseAmounts.put(slot, amount);
-            } catch (Exception e) {
-                LoggerUtils.warn("Error loading increase button: " + e.getMessage());
+            } catch (Exception exception) {
+                LoggerUtils.warn(exception.getMessage());
             }
         });
 
@@ -65,10 +65,10 @@ public final class QuantitySelectorManager {
         this.previewSlot = config.getInt("quantity-selector.preview-slot");
     }
 
-    public void openQuantitySelector(@NotNull Player player, @NotNull ItemStack item, int buyPrice, @NotNull String currencyStr) {
+    public void openQuantitySelector(@NotNull Player player, @NotNull ItemStack item, int buyPrice, @NotNull String currency) {
         String title = MessageProcessor.process(config.getString("quantity-selector.name"));
-        int size = config.getInt("quantity-selector.size", 27);
-        QuantitySelectorHolder holder = new QuantitySelectorHolder("quantity-selector", item, buyPrice, currencyStr);
+        int size = config.getInt("quantity-selector.size");
+        QuantitySelectorHolder holder = new QuantitySelectorHolder("quantity-selector", item, buyPrice, currency);
         Inventory inventory = Bukkit.createInventory(holder, size, title);
 
         holder.setInventory(inventory);
@@ -80,15 +80,30 @@ public final class QuantitySelectorManager {
         Inventory inventory = holder.getInventory();
         inventory.clear();
 
-        // Set the preview item (the item being purchased)
         ItemStack previewItem = holder.getItem().clone();
+        int quantity = holder.getQuantity();
+
+        previewItem.setAmount(Math.min(quantity, 64));
+
+        if (quantity > 64) {
+            ItemMeta meta = previewItem.getItemMeta();
+            if (meta != null) {
+                String itemName = meta.hasDisplayName() ? meta.getDisplayName() : "";
+                itemName = MessageProcessor.process(itemName + " &7(x" + quantity + ")");
+                meta.setDisplayName(itemName);
+
+                List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
+                lore.add(MessageProcessor.process("&7Total quantity: &e" + quantity));
+                meta.setLore(lore);
+                previewItem.setItemMeta(meta);
+            }
+        }
+
         inventory.setItem(previewSlot, previewItem);
 
-        // Create and set the quantity display item
         ItemStack quantityDisplay = createQuantityDisplay(holder);
         inventory.setItem(quantityDisplaySlot, quantityDisplay);
 
-        // Add decrease buttons
         decreaseAmounts.forEach((slot, amount) -> {
             String key = "decrease-" + amount;
             String path = "quantity-selector.decrease-buttons." + key;
@@ -110,15 +125,12 @@ public final class QuantitySelectorManager {
         inventory.setItem(cancelSlot, cancelButton);
 
         if (!config.getString("quantity-selector.filler").isEmpty()) {
-            Material fillerMaterial = Material.valueOf(
-                    config.getString("quantity-selector.filler.material", "BLACK_STAINED_GLASS_PANE").toUpperCase());
-            String fillerName = MessageProcessor.process(config.getString("quantity-selector.filler.name", ""));
+            Material fillerMaterial = Material.valueOf(config.getString("quantity-selector.filler.material").toUpperCase());
+            String fillerName = MessageProcessor.process(config.getString("quantity-selector.filler.name"));
             ItemStack filler = ItemFactory.createFillerItem(fillerMaterial, fillerName, new ArrayList<>());
 
             for (int i = 0; i < inventory.getSize(); i++) {
-                if (inventory.getItem(i) == null) {
-                    inventory.setItem(i, filler);
-                }
+                if (inventory.getItem(i) == null) inventory.setItem(i, filler);
             }
         }
     }
