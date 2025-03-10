@@ -8,6 +8,7 @@ import com.artillexstudios.axapi.libs.boostedyaml.boostedyaml.settings.updater.U
 import com.github.Anon8281.universalScheduler.UniversalScheduler;
 import com.github.Anon8281.universalScheduler.scheduling.schedulers.TaskScheduler;
 import lombok.Getter;
+import net.coma112.axshop.managers.QuantitySelectorManager;
 import net.coma112.axshop.managers.ShopService;
 import net.coma112.axshop.utils.LoggerUtils;
 import net.coma112.axshop.utils.RegistrationHelper;
@@ -22,6 +23,8 @@ public final class AxShop extends ZapperJavaPlugin {
     @Getter static AxShop instance;
     @Getter TaskScheduler scheduler;
     @Getter Config language;
+    @Getter
+    QuantitySelectorManager quantitySelectorManager;
     Config config;
 
     @Override

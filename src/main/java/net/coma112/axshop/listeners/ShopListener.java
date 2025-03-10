@@ -60,8 +60,7 @@ public final class ShopListener implements Listener {
         }
     }
 
-    private void handleQuantitySelectorClick(int slot, @NotNull Player player,
-                                             @NotNull QuantitySelectorHolder holder) {
+    private void handleQuantitySelectorClick(int slot, @NotNull Player player, @NotNull QuantitySelectorHolder holder) {
         QuantitySelectorManager manager = QuantitySelectorManager.getInstance();
 
         if (manager.isDecreaseButton(slot)) {
@@ -69,23 +68,19 @@ public final class ShopListener implements Listener {
             holder.decreaseQuantity(amount);
             manager.updateInventory(holder);
         }
+
         else if (manager.isIncreaseButton(slot)) {
             int amount = manager.getIncreaseAmount(slot);
             holder.increaseQuantity(amount);
             manager.updateInventory(holder);
         }
-        else if (manager.isConfirmButton(slot)) {
-            handleBuyConfirmation(player, holder);
-        }
+
+        else if (manager.isConfirmButton(slot)) handleBuyConfirmation(player, holder);
         else if (manager.isCancelButton(slot)) {
-            // Return to previous shop menu
             final String shopType = holder.getShopType();
             Optional<CategoryManager> category = ShopService.getInstance().getCategory(shopType);
-            if (category.isPresent()) {
-                player.openInventory(category.get().getInventory());
-            } else {
-                player.openInventory(ShopService.getInstance().getMainMenu());
-            }
+            if (category.isPresent()) player.openInventory(category.get().getInventory());
+            else player.openInventory(ShopService.getInstance().getMainMenu());
         }
     }
 
@@ -128,18 +123,16 @@ public final class ShopListener implements Listener {
         });
     }
 
-    private void handleShopItemClick(@NotNull ItemStack clickedItem, @NotNull InventoryClickEvent event,
-                                     @NotNull ShopHolder shopHolder) {
+    private void handleShopItemClick(@NotNull ItemStack clickedItem, @NotNull InventoryClickEvent event, @NotNull ShopHolder shopHolder) {
         try {
             final ItemMeta meta = clickedItem.getItemMeta();
             if (meta == null) return;
 
             final PersistentDataContainer container = meta.getPersistentDataContainer();
-
             final String categoryId = container.get(CATEGORY_KEY, PersistentDataType.STRING);
+
             if (categoryId != null) {
-                ShopService.getInstance().getCategory(categoryId)
-                        .ifPresent(category -> event.getWhoClicked().openInventory(category.getInventory()));
+                ShopService.getInstance().getCategory(categoryId).ifPresent(category -> event.getWhoClicked().openInventory(category.getInventory()));
                 return;
             }
 
@@ -162,12 +155,9 @@ public final class ShopListener implements Listener {
 
             switch (clickType) {
                 case LEFT -> {
-                    // For buy actions, now open quantity selector
-                    if (buyPrice != null) {
-                        QuantitySelectorManager.getInstance().openQuantitySelector(
-                                player, clickedItem, buyPrice, currencyStr);
-                    }
+                    if (buyPrice != null) QuantitySelectorManager.getInstance().openQuantitySelector(player, clickedItem, buyPrice, currencyStr);
                 }
+
                 case RIGHT -> handleSellAction(player, clickedItem, sellPrice, currency, 1);
                 case SHIFT_RIGHT -> handleSellAction(player, clickedItem, sellPrice, currency,
                         InventoryHelper.countItems(player, clickedItem.getType()));
@@ -176,24 +166,6 @@ public final class ShopListener implements Listener {
         } catch (Exception exception) {
             LoggerUtils.warn(exception.getMessage());
         }
-    }
-
-    private void handleBuyAction(Player player, ItemStack item, Integer buyPrice, CurrencyTypes currency) {
-        if (buyPrice == null) return;
-
-        if (InventoryHelper.isInventoryFull(player)) {
-            player.sendMessage(MessageKeys.FULL_INVENTORY.getMessage());
-            return;
-        }
-
-        CompletableFuture.runAsync(() -> {
-            if (CurrencyHandler.deduct(player, buyPrice, currency)) {
-                AxShop.getInstance().getScheduler().runTask(() ->
-                        player.getInventory().addItem(ItemStack.of(item.getType())));
-            } else {
-                player.sendMessage(MessageProcessor.process("&cNot enough currency!"));
-            }
-        });
     }
 
     private void handleSellAction(@NotNull Player player, @NotNull ItemStack item, @Nullable Integer sellPrice, @NotNull CurrencyTypes currency, int amount) {
@@ -226,11 +198,12 @@ public final class ShopListener implements Listener {
     @EventHandler(priority = EventPriority.NORMAL)
     public void onInventoryClose(@NotNull final InventoryCloseEvent event) {
         if (event.getInventory().getHolder() instanceof ShopHolder shopHolder) {
-            if (shopHolder.getShopType().equals("main-menu")) return;
+            if (shopHolder.getShopType().equals("main-menu") || event.getInventory().getHolder() instanceof QuantitySelectorHolder) return;
 
             final Player player = (Player) event.getPlayer();
-            AxShop.getInstance().getScheduler().runTaskLater(() ->
-                    player.openInventory(ShopService.getInstance().getMainMenu()), 1L);
+            AxShop.getInstance().getScheduler().runTaskLater(() -> {
+                if (!(player.getOpenInventory().getTopInventory().getHolder() instanceof QuantitySelectorHolder)) player.openInventory(ShopService.getInstance().getMainMenu());
+            }, 1L);
         }
     }
 }

@@ -14,11 +14,8 @@ public final class QuantitySelectorHolder implements InventoryHolder {
     private final int buyPrice;
     private final String currency;
 
-    @Setter
-    private int quantity = 1;
-
-    @Setter
-    private Inventory inventory;
+    @Setter private int quantity = 1;
+    @Setter private Inventory inventory;
 
     public QuantitySelectorHolder(@NotNull String shopType, @NotNull ItemStack item, int buyPrice, @NotNull String currency) {
         this.shopType = shopType;

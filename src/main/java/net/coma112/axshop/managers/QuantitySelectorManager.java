@@ -4,8 +4,6 @@ import com.artillexstudios.axapi.config.Config;
 import lombok.Getter;
 import net.coma112.axshop.AxShop;
 import net.coma112.axshop.holder.QuantitySelectorHolder;
-import net.coma112.axshop.holder.ShopHolder;
-import net.coma112.axshop.identifiers.CurrencyTypes;
 import net.coma112.axshop.item.ItemFactory;
 import net.coma112.axshop.processor.MessageProcessor;
 import net.coma112.axshop.utils.LoggerUtils;
@@ -14,7 +12,6 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -22,6 +19,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+@SuppressWarnings("deprecation")
 public final class QuantitySelectorManager {
     @Getter private static final QuantitySelectorManager instance = new QuantitySelectorManager();
 
@@ -39,7 +37,7 @@ public final class QuantitySelectorManager {
     }
 
     private void loadConfig() {
-        config.getSection("quantity-selector.decrease-buttons").getKeys(false).forEach(key -> {
+        config.getSection("quantity-selector.decrease-buttons").getRoutesAsStrings(false).forEach(key -> {
             try {
                 String path = "quantity-selector.decrease-buttons." + key;
                 int slot = config.getInt(path + ".slot");
@@ -50,7 +48,7 @@ public final class QuantitySelectorManager {
             }
         });
 
-        config.getSection("quantity-selector.increase-buttons").getKeys(false).forEach(key -> {
+        config.getSection("quantity-selector.increase-buttons").getRoutesAsStrings(false).forEach(key -> {
             try {
                 String path = "quantity-selector.increase-buttons." + key;
                 int slot = config.getInt(path + ".slot");
@@ -70,16 +68,11 @@ public final class QuantitySelectorManager {
     public void openQuantitySelector(@NotNull Player player, @NotNull ItemStack item, int buyPrice, @NotNull String currencyStr) {
         String title = MessageProcessor.process(config.getString("quantity-selector.name"));
         int size = config.getInt("quantity-selector.size", 27);
-
-        QuantitySelectorHolder holder = new QuantitySelectorHolder(
-                "quantity-selector", item, buyPrice, currencyStr);
+        QuantitySelectorHolder holder = new QuantitySelectorHolder("quantity-selector", item, buyPrice, currencyStr);
         Inventory inventory = Bukkit.createInventory(holder, size, title);
+
         holder.setInventory(inventory);
-
-        // Update the inventory contents
         updateInventory(holder);
-
-        // Open inventory for player
         player.openInventory(inventory);
     }
 
