@@ -10,6 +10,8 @@ messages:
   full-inventory: "%prefix% &cYour inventory is full!"
   no-item-found: "%prefix% &cThere is no such an item in your inventory!"
   disabled-world: "%prefix% &cYou can't open the shop in this world!"
+  success-buy: "%prefix% &aSuccessfully bought!"
+  success-sold: "%prefix% &aSuccessfully sold!"
   worth:
     header: "&eInventory value:"
     item: "&7- &e{item} &7(&e{amount}&fx&7) - &e{value} - &e{currency}"

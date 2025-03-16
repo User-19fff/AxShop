@@ -9,7 +9,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 
 public class BeastTokenService {
-    @Getter private static BeastTokenService instance = new BeastTokenService();
+    @Getter private static final BeastTokenService instance = new BeastTokenService();
     private BTTokensManager api;
     private static boolean isRegistered = false;
 

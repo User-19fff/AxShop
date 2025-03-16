@@ -1,4 +1,4 @@
-package net.coma112.axshop.listeners;
+package net.coma112.axshop.listener;
 
 import net.coma112.axshop.AxShop;
 import net.coma112.axshop.handlers.CurrencyHandler;
@@ -9,9 +9,9 @@ import net.coma112.axshop.identifiers.keys.MessageKeys;
 import net.coma112.axshop.managers.CategoryManager;
 import net.coma112.axshop.managers.QuantitySelectorManager;
 import net.coma112.axshop.managers.ShopService;
-import net.coma112.axshop.processor.MessageProcessor;
 import net.coma112.axshop.utils.InventoryHelper;
 import net.coma112.axshop.utils.LoggerUtils;
+import org.bukkit.Bukkit;
 import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -28,7 +28,6 @@ import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
@@ -101,16 +100,14 @@ public final class ShopListener implements Listener {
                     ItemStack purchasedItems = new ItemStack(item.getType(), quantity);
                     player.getInventory().addItem(purchasedItems)
                             .forEach((index, leftover) -> player.getWorld().dropItem(player.getLocation(), leftover));
-                    player.sendMessage(MessageProcessor.process(
-                            "&aSuccessfully purchased &e" + quantity + "x " + item.getType().name().toLowerCase() +
-                                    " &afor &e" + totalPrice + " " + currency.name()));
+                    player.sendMessage(MessageKeys.SUCCESS_BUY.getMessage());
 
                     final String shopType = holder.getShopType();
                     Optional<CategoryManager> category = ShopService.getInstance().getCategory(shopType);
                     if (category.isPresent()) player.openInventory(category.get().getInventory());
                     else player.openInventory(ShopService.getInstance().getMainMenu());
                 });
-            } //else player.sendMessage(MessageProcessor.process("&cNot enough currency to complete this purchase!"));
+            } else player.sendMessage(MessageKeys.NOT_ENOUGH_MONEY.getMessage());
         });
     }
 
@@ -146,7 +143,27 @@ public final class ShopListener implements Listener {
 
             switch (clickType) {
                 case LEFT -> {
-                    if (buyPrice != null) QuantitySelectorManager.getInstance().openQuantitySelector(player, clickedItem, buyPrice, currencyStr);
+                    if (buyPrice != null) {
+                        NamespacedKey commandsKey = new NamespacedKey(AxShop.getInstance(), "shop-commands");
+                        String commandsString = container.get(commandsKey, PersistentDataType.STRING);
+
+                        if (commandsString != null && !commandsString.isEmpty()) {
+                            int quantity = 1;
+                            int totalPrice = buyPrice * quantity;
+
+                            if (CurrencyHandler.deduct(player, totalPrice, currency)) {
+                                String[] commands = commandsString.split(";;");
+
+                                for (String cmd : commands) {
+                                    String processedCmd = cmd.replace("%player%", player.getName());
+                                    Bukkit.dispatchCommand(Bukkit.getConsoleSender(), processedCmd);
+                                }
+
+                                player.sendMessage(MessageKeys.SUCCESS_BUY.getMessage());
+                            } else player.sendMessage(MessageKeys.NOT_ENOUGH_MONEY.getMessage());
+                        } else QuantitySelectorManager.getInstance().openQuantitySelector(player, clickedItem, buyPrice, currencyStr);
+
+                    }
                 }
 
                 case RIGHT -> handleSellAction(player, clickedItem, sellPrice, currency, 1);
@@ -171,9 +188,7 @@ public final class ShopListener implements Listener {
             if (InventoryHelper.hasAndRemove(player, item.getType(), amount)) {
                 final int totalSellPrice = sellPrice * amount;
                 CurrencyHandler.add(player, totalSellPrice, currency);
-                player.sendMessage(MessageProcessor.process(
-                        "&aSuccessfully sold &e" + amount + "x " + item.getType().name().toLowerCase() +
-                                " &afor &e" + totalSellPrice + " " + currency.name()));
+                player.sendMessage(MessageKeys.SUCCESS_SELL.getMessage());
             } else player.sendMessage(MessageKeys.NO_ITEM_FOUND.getMessage());
         });
     }

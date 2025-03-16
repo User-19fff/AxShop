@@ -17,15 +17,16 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @SuppressWarnings("deprecation")
 public final class QuantitySelectorManager {
     @Getter private static final QuantitySelectorManager instance = new QuantitySelectorManager();
-
     private final Config config;
     private final ConcurrentHashMap<Integer, Integer> decreaseAmounts = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<Integer, Integer> increaseAmounts = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, ItemStack> fillerItems = new ConcurrentHashMap<>();
     private int confirmSlot;
     private int cancelSlot;
     private int quantityDisplaySlot;
@@ -59,6 +60,15 @@ public final class QuantitySelectorManager {
             }
         });
 
+        String fillerPath = "quantity-selector.filler";
+        Material fillerMaterial = Material.valueOf(config.getString(fillerPath + ".material").toUpperCase());
+        String fillerName = MessageProcessor.process(config.getString(fillerPath + ".name"));
+        ItemStack fillerItem = ItemFactory.createFillerItem(fillerMaterial, fillerName, new ArrayList<>());
+
+        for (int i = 0; i < config.getInt("quantity-selector.size"); i++) {
+            fillerItems.put(i, fillerItem);
+        }
+
         this.confirmSlot = config.getInt("quantity-selector.confirm.slot");
         this.cancelSlot = config.getInt("quantity-selector.cancel.slot");
         this.quantityDisplaySlot = config.getInt("quantity-selector.quantity-display.slot");
@@ -80,30 +90,23 @@ public final class QuantitySelectorManager {
         Inventory inventory = holder.getInventory();
         inventory.clear();
 
-        ItemStack previewItem = holder.getItem().clone();
-        int quantity = holder.getQuantity();
-
-        previewItem.setAmount(Math.min(quantity, 64));
-
-        if (quantity > 64) {
-            ItemMeta meta = previewItem.getItemMeta();
-            if (meta != null) {
-                String itemName = meta.hasDisplayName() ? meta.getDisplayName() : "";
-                itemName = MessageProcessor.process(itemName + " &7(x" + quantity + ")");
-                meta.setDisplayName(itemName);
-
-                List<String> lore = meta.hasLore() ? meta.getLore() : new ArrayList<>();
-                lore.add(MessageProcessor.process("&7Total quantity: &e" + quantity));
-                meta.setLore(lore);
-                previewItem.setItemMeta(meta);
+        // First apply fillers
+        if (!fillerItems.isEmpty()) {
+            for (Map.Entry<Integer, ItemStack> entry : fillerItems.entrySet()) {
+                inventory.setItem(entry.getKey(), entry.getValue().clone());
             }
         }
 
+        // Create preview item
+        ItemStack originalItem = holder.getItem();
+        ItemStack previewItem = createPreviewItem(originalItem, holder.getQuantity(), holder.getBuyPrice(), holder.getCurrency());
         inventory.setItem(previewSlot, previewItem);
 
+        // Create quantity display
         ItemStack quantityDisplay = createQuantityDisplay(holder);
         inventory.setItem(quantityDisplaySlot, quantityDisplay);
 
+        // Create decrease buttons
         decreaseAmounts.forEach((slot, amount) -> {
             String key = "decrease-" + amount;
             String path = "quantity-selector.decrease-buttons." + key;
@@ -111,6 +114,7 @@ public final class QuantitySelectorManager {
             inventory.setItem(slot, button);
         });
 
+        // Create increase buttons
         increaseAmounts.forEach((slot, amount) -> {
             String key = "increase-" + amount;
             String path = "quantity-selector.increase-buttons." + key;
@@ -118,21 +122,47 @@ public final class QuantitySelectorManager {
             inventory.setItem(slot, button);
         });
 
+        // Create confirm and cancel buttons
         ItemStack confirmButton = createButton("quantity-selector.confirm", holder);
         inventory.setItem(confirmSlot, confirmButton);
 
         ItemStack cancelButton = createButton("quantity-selector.cancel", holder);
         inventory.setItem(cancelSlot, cancelButton);
+    }
 
-        if (!config.getString("quantity-selector.filler").isEmpty()) {
-            Material fillerMaterial = Material.valueOf(config.getString("quantity-selector.filler.material").toUpperCase());
-            String fillerName = MessageProcessor.process(config.getString("quantity-selector.filler.name"));
-            ItemStack filler = ItemFactory.createFillerItem(fillerMaterial, fillerName, new ArrayList<>());
+    @NotNull
+    private ItemStack createPreviewItem(@NotNull ItemStack originalItem, int quantity, int buyPrice, @NotNull String currency) {
+        ItemStack previewItem = originalItem.clone();
+        previewItem.setAmount(Math.min(quantity, 64));
 
-            for (int i = 0; i < inventory.getSize(); i++) {
-                if (inventory.getItem(i) == null) inventory.setItem(i, filler);
+        // Apply template from config
+        ItemMeta meta = previewItem.getItemMeta();
+        if (meta != null) {
+            String itemName = originalItem.getItemMeta().hasDisplayName() ?
+                    originalItem.getItemMeta().getDisplayName() :
+                    originalItem.getType().toString();
+
+            String configName = config.getString("quantity-selector-item.name", "&e{name} &7(x{amount})");
+            configName = configName.replace("{name}", itemName)
+                    .replace("{amount}", String.valueOf(quantity));
+
+            meta.setDisplayName(MessageProcessor.process(configName));
+
+            List<String> configLore = config.getStringList("quantity-selector-item.lore");
+            List<String> processedLore = new ArrayList<>();
+
+            for (String line : configLore) {
+                line = line.replace("{buyPrice}", String.valueOf(buyPrice))
+                        .replace("{sellPrice}", String.valueOf(buyPrice / 2))  // Assuming sell price is half of buy price
+                        .replace("{currency}", currency);
+                processedLore.add(MessageProcessor.process(line));
             }
+
+            meta.setLore(processedLore);
+            previewItem.setItemMeta(meta);
         }
+
+        return previewItem;
     }
 
     @NotNull
@@ -157,7 +187,7 @@ public final class QuantitySelectorManager {
     }
 
     @NotNull
-    private ItemStack createButton(String path, @NotNull QuantitySelectorHolder holder) {
+    private ItemStack createButton(@NotNull String path, @NotNull QuantitySelectorHolder holder) {
         Material material = Material.valueOf(config.getString(path + ".material").toUpperCase());
 
         String name = config.getString(path + ".name", "")

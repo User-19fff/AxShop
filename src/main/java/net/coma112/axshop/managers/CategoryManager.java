@@ -6,8 +6,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
-
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Getter
@@ -15,8 +13,8 @@ import java.util.concurrent.ConcurrentHashMap;
 public final class CategoryManager {
     private final String id;
     private final String displayName;
-    private final Map<String, ItemStack> items = new ConcurrentHashMap<>();
-    private final Map<Integer, ItemStack> fillers = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, ItemStack> items = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, ItemStack> fillers = new ConcurrentHashMap<>();
     private final Inventory inventory;
 
     public CategoryManager(@NotNull String id, @NotNull String displayName, int size) {

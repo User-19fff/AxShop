@@ -32,7 +32,6 @@ public class ShopCommand implements OrphanCommand {
         sender.sendMessage(MessageKeys.RELOAD.getMessage());
     }
 
-    @Subcommand("menu")
     @CommandPermission("axshop.menu")
     @DefaultFor("~")
     public void menu(@NotNull Player player) {

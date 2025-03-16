@@ -7,12 +7,10 @@ import net.coma112.axshop.identifiers.CurrencyTypes;
 import net.coma112.axshop.interfaces.CurrencyProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CurrencyRegistryService {
-    private static final Map<CurrencyTypes, CurrencyProvider> providers = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<CurrencyTypes, CurrencyProvider> providers = new ConcurrentHashMap<>();
 
     static {
         register(CurrencyTypes.VAULT, new VaultCurrency());

@@ -11,8 +11,12 @@ import net.coma112.axshop.processor.MessageProcessor;
 import net.coma112.axshop.utils.LoggerUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -29,8 +33,8 @@ import java.util.stream.IntStream;
 public final class ShopService {
     @Getter private static final ShopService instance = new ShopService();
 
-    private final Map<String, Inventory> menus = new ConcurrentHashMap<>();
-    private final Map<String, CategoryManager> categories = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Inventory> menus = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, CategoryManager> categories = new ConcurrentHashMap<>();
     private Inventory mainMenuInventory;
 
     public void initialize() {
@@ -207,7 +211,7 @@ public final class ShopService {
                 sellPrice,
                 currency);
 
-        return ItemFactory.createShopItem(
+        ItemStack item = ItemFactory.createShopItem(
                 material,
                 name,
                 lore,
@@ -215,6 +219,20 @@ public final class ShopService {
                 sellPrice,
                 currency.name()
         );
+
+        List<String> commands = (List<String>) itemMap.get("commands");
+        if (commands != null && !commands.isEmpty()) {
+            ItemMeta meta = item.getItemMeta();
+            if (meta != null) {
+                PersistentDataContainer container = meta.getPersistentDataContainer();
+                NamespacedKey commandsKey = new NamespacedKey(AxShop.getInstance(), "shop-commands");
+                String commandsString = String.join(";;", commands);
+                container.set(commandsKey, PersistentDataType.STRING, commandsString);
+                item.setItemMeta(meta);
+            }
+        }
+
+        return item;
     }
 
     @NotNull

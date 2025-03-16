@@ -10,19 +10,18 @@ import net.coma112.axshop.hooks.plugins.BeastTokenService;
 import net.coma112.axshop.hooks.plugins.PlayerPointsService;
 import net.coma112.axshop.hooks.plugins.VaultService;
 import net.coma112.axshop.identifiers.keys.ConfigKeys;
-import net.coma112.axshop.listeners.ShopListener;
+import net.coma112.axshop.listener.ShopListener;
 import org.bukkit.Bukkit;
 import revxrsal.commands.bukkit.BukkitCommandHandler;
 import revxrsal.commands.orphan.Orphans;
 
 import java.util.Locale;
-import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @UtilityClass
 @SuppressWarnings("deprecation")
 public class RegistrationHelper {
-    @Getter public static final Map<Long, String> basicFormatOverrides = new ConcurrentHashMap<>();
+    @Getter public static final ConcurrentHashMap<Long, String> basicFormatOverrides = new ConcurrentHashMap<>();
 
     public void loadBasicFormatOverrides() {
         getBasicFormatOverrides().clear();

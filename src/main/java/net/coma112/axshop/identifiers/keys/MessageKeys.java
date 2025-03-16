@@ -25,7 +25,10 @@ public enum MessageKeys {
 
     WORTH_ITEM("messages.worth.item"),
     WORTH_HEADER("messages.worth.header"),
-    WORTH_TOTAL("messages.worth.total");
+    WORTH_TOTAL("messages.worth.total"),
+
+    SUCCESS_BUY("messages.success-buy"),
+    SUCCESS_SELL("messages.success-sell");
 
     private final String path;
     private static final AxShop PLUGIN = AxShop.getInstance();

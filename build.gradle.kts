@@ -29,7 +29,7 @@ dependencies {
 
     compileOnly("io.papermc.paper:paper-api:1.21-R0.1-SNAPSHOT")
     compileOnly("org.projectlombok:lombok:1.18.36")
-    compileOnly(files("libs/beasttokens.jar"))
+    compileOnly(files("libs/bt.jar"))
     compileOnly("com.github.MilkBowl:VaultAPI:1.7.1") {
         exclude(module = "org.bukkit.bukkit") // vault
     }
