@@ -16,6 +16,7 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -90,23 +91,19 @@ public final class QuantitySelectorManager {
         Inventory inventory = holder.getInventory();
         inventory.clear();
 
-        // First apply fillers
         if (!fillerItems.isEmpty()) {
             for (Map.Entry<Integer, ItemStack> entry : fillerItems.entrySet()) {
                 inventory.setItem(entry.getKey(), entry.getValue().clone());
             }
         }
 
-        // Create preview item
         ItemStack originalItem = holder.getItem();
         ItemStack previewItem = createPreviewItem(originalItem, holder.getQuantity(), holder.getBuyPrice(), holder.getCurrency());
         inventory.setItem(previewSlot, previewItem);
 
-        // Create quantity display
         ItemStack quantityDisplay = createQuantityDisplay(holder);
         inventory.setItem(quantityDisplaySlot, quantityDisplay);
 
-        // Create decrease buttons
         decreaseAmounts.forEach((slot, amount) -> {
             String key = "decrease-" + amount;
             String path = "quantity-selector.decrease-buttons." + key;
@@ -114,7 +111,6 @@ public final class QuantitySelectorManager {
             inventory.setItem(slot, button);
         });
 
-        // Create increase buttons
         increaseAmounts.forEach((slot, amount) -> {
             String key = "increase-" + amount;
             String path = "quantity-selector.increase-buttons." + key;
@@ -122,7 +118,6 @@ public final class QuantitySelectorManager {
             inventory.setItem(slot, button);
         });
 
-        // Create confirm and cancel buttons
         ItemStack confirmButton = createButton("quantity-selector.confirm", holder);
         inventory.setItem(confirmSlot, confirmButton);
 
@@ -135,7 +130,6 @@ public final class QuantitySelectorManager {
         ItemStack previewItem = originalItem.clone();
         previewItem.setAmount(Math.min(quantity, 64));
 
-        // Apply template from config
         ItemMeta meta = previewItem.getItemMeta();
         if (meta != null) {
             String itemName = originalItem.getItemMeta().hasDisplayName() ?
@@ -196,7 +190,8 @@ public final class QuantitySelectorManager {
         name = MessageProcessor.process(name);
 
         List<String> lore = config.getStringList(path + ".lore");
-        List<String> processedLore = new ArrayList<>();
+        List<String> processedLore = Collections.synchronizedList(new ArrayList<>());
+
         for (String line : lore) {
             line = line.replace("{quantity}", String.valueOf(holder.getQuantity()))
                     .replace("{total_price}", String.valueOf(holder.getTotalPrice()));
